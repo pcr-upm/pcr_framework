@@ -138,11 +138,11 @@ def geometry2numpy(geom):
     # Convert geometry from shapely to numpy
     from shapely import geometry
     coords = np.array(geometry.mapping(geom)['coordinates'], dtype=object)
-    if geom.geom_type is 'Point':
+    if geom.geom_type == 'Point':
         contours = [np.array([[[coords[0], coords[1]]]], dtype=int)]
-    elif geom.geom_type is 'LineString':
+    elif geom.geom_type == 'LineString':
         contours = [np.array([[[pt[0], pt[1]]] for pt in coords], dtype=int)]
-    elif geom.geom_type is 'Polygon':
+    elif geom.geom_type == 'Polygon':
         contours = [np.array([[[pt[0], pt[1]]] for pt in coords[0]], dtype=int)]
     else:
         contours = np.empty((len(coords),), dtype=object)
