@@ -48,7 +48,7 @@ class Alignment(Component):
         pass
 
     def show(self, viewer, ann, pred):
-        from images_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl, FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
+        from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl, FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
 
         def pairwise(iterable):
             import itertools

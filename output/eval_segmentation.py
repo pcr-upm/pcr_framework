@@ -12,7 +12,7 @@ from PIL import Image
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 from eval_tools import draw_confusion_matrix
-from images_framework.src.utils import geometry2numpy, contours2mask
+from pcr_framework.src.utils import geometry2numpy, contours2mask
 
 
 def parse_file(input_file):

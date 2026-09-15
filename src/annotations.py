@@ -8,7 +8,7 @@ import numpy as np
 from enum import Enum
 from scipy.spatial.transform import Rotation
 from .categories import Name
-from images_framework.regression.alignment.landmarks import PersonLandmarkPart as Pl
+from pcr_framework.regression.alignment.landmarks import PersonLandmarkPart as Pl
 
 
 class GenericCategory:
@@ -64,7 +64,7 @@ class PersonObject(GenericObject):
     Person object inherits from the generic object class.
     """
     def __init__(self):
-        from images_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
+        from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
         super().__init__()
         self.headpose = Rotation.from_euler('YXZ', [-1, -1, -1], degrees=True).as_matrix()
         self.attributes = list([])

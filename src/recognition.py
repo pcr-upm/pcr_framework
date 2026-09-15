@@ -51,7 +51,7 @@ class Recognition(Component):
 
     def show(self, viewer, ann, pred):
         def draw_categories(viewer, img, names, drawing, idx, categories, bbox, current_time=None):
-            from images_framework.src.annotations import TemporalCategory
+            from pcr_framework.src.annotations import TemporalCategory
             values = [drawing[cat.label.name] if cat.label.name in names else (0, 255, 0) for cat in categories]
             color = np.mean(values, axis=0)
             margin = 2

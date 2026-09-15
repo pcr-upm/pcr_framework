@@ -3,7 +3,7 @@
 __author__ = 'Roberto Valle'
 __email__ = 'roberto.valle@upm.es'
 
-from images_framework.src.categories import Name, Category as Oi
+from pcr_framework.src.categories import Name, Category as Oi
 
 
 class Accessory(Oi):

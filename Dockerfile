@@ -5,7 +5,7 @@ FROM ubuntu as intermediate
 RUN apt-get update && apt-get install -y --no-install-recommends git openssh-client && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p -m 0700 /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 # Download the computer vision framework
-RUN --mount=type=ssh git clone git@github.com:pcr-upm/images_framework.git images_framework
+RUN --mount=type=ssh git clone git@github.com:pcr-upm/pcr_framework.git pcr_framework
 
 # Copy the repository from the previous image
 FROM ubuntu
@@ -15,7 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential wget ca-certificates libsm6 libxext6 libxrender-dev libglib2.0-0 && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /home/username
 WORKDIR /home/username
-COPY --from=intermediate /images_framework /home/username/images_framework
+COPY --from=intermediate /pcr_framework /home/username/pcr_framework
 LABEL maintainer="roberto.valle@upm.es"
 # Setup conda environment
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/username/miniconda.sh
@@ -23,7 +23,7 @@ RUN chmod +x /home/username/miniconda.sh
 RUN /home/username/miniconda.sh -b -p /home/username/conda
 RUN /home/username/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
     /home/username/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
-RUN /home/username/conda/bin/conda create --name framework python=3.6
+RUN /home/username/conda/bin/conda create --name framework python=3.8
 # Activate conda environment
 ENV PATH /home/username/conda/envs/framework/bin:/home/username/conda/bin:$PATH
 # Make RUN commands use the new environment (source activate framework)
