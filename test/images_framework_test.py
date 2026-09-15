@@ -34,7 +34,7 @@ def main():
     # Save result
     dirname = 'images_framework/output/images/'
     Path(dirname).mkdir(parents=True, exist_ok=True)
-    viewer.save(dirname)
+    viewer.save(dirname, as_video=False, format='tif')
     print('End of images_framework_test')
 
 

@@ -36,12 +36,12 @@ def draw_histogram(errors, categories):
 def draw_cumulative_curve(errors, categories, threshold=15, database=None):
     # Draw cumulative curves for each category
     import matplotlib.pyplot as plt
-    import matplotlib.colors as col
+    import matplotlib.colors as mcolors
     from eval_alignment import area_under_curve, failure_rate
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.axis([0, threshold, 0, 1])
-    c_dark = list(filter(lambda x: x.startswith('dark'), col.cnames.keys()))
+    css = list(mcolors.CSS4_COLORS.values())
     aucs, frs = [], []
     for idx in range(errors.shape[1]):
         values, base = np.histogram(errors[:, idx], bins=10000)
@@ -51,7 +51,7 @@ def draw_cumulative_curve(errors, categories, threshold=15, database=None):
         np.savetxt('images_framework/output/cum/cumulative_' + str(idx) + '.txt', np.column_stack([base, cumulative]), fmt='%1.6f')
         aucs.append(area_under_curve(base, cumulative, threshold))
         frs.append(failure_rate(base, cumulative, threshold))
-        plt.plot(base, cumulative, color=c_dark[idx], zorder=20, label=categories[idx])
+        plt.plot(base, cumulative, color=css[idx], zorder=20, label=categories[idx])
     literature = {'burgos13': ('RCPR', '#96f97b'), 'kazemi14': ('ERT', '#929591'), 'lee15': ('cGPRT', '#ffff14'), 'honari16': ('RCN', '#f97306'), 'marek17': ('DAN', '#c20078'), 'yang17': ('SHN', '#78c930'), 'deng17': ('MHM', '#944f00'), 'wu18': ('LAB', '#15b01a'), 'valle18': ('DCFE', '#e50000'), 'feng18': ('PRN', '#7e1e9c'), 'dong18': ('SAN', '#e6daa6'), 'valle19a': ('3DDE''#653700', '#653700'), 'valle19b': ('CHR2C', '#00e1a2'), 'valle20': ('MNN+OERT', '#0096d1'), 'dad22': ('DAD-3DHeads', '#69d100')}
     if database is not None:
         import os
@@ -86,24 +86,24 @@ def draw_cumulative_curve(errors, categories, threshold=15, database=None):
 def draw_precision_recall(precisions, recalls, categories):
     # Draw precision-recall curves for each category
     import matplotlib.pyplot as plt
-    import matplotlib.colors as col
+    import matplotlib.colors as mcolors
     from eval_detection import calc_ap
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.axis([0, 1, 0, 1])
-    c_dark = list(filter(lambda x: x.startswith('dark'), col.cnames.keys()))
+    css = list(mcolors.CSS4_COLORS.values())
     aps = []
     dirname = 'images_framework/output/pr/'
     Path(dirname).mkdir(parents=True, exist_ok=True)
     # Compare algorithms for a specific category
     # for idx, filename in enumerate(['SCRDet19', 'RetinaNet17']):
     #     precision, recall = np.loadtxt('images_framework/output/pr/cowc_' + filename.lower() + '.txt', unpack=True)
-    #     plt.plot(recall, precision, color=c_dark[idx], label=filename)
+    #     plt.plot(recall, precision, color=css[idx], label=filename)
     #     aps.append(calc_ap(recall, precision))
     # Compare categories for a specific algorithm
     for idx in range(len(categories)):
         np.savetxt('images_framework/output/pr/precision_recall_' + str(idx) + '.txt', np.column_stack([precisions[idx], recalls[idx]]))
-        plt.plot(recalls[idx], precisions[idx], color=c_dark[idx], label=categories[idx])
+        plt.plot(recalls[idx], precisions[idx], color=css[idx], label=categories[idx])
         aps.append(calc_ap(recalls[idx], precisions[idx]))
     handles, labels = ax.get_legend_handles_labels()
     labels = [str(val + ' [' + '{:.3f}'.format(aps[idx]) + ']') for idx, val in enumerate(labels)]

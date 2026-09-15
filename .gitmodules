@@ -43,9 +43,6 @@
 [submodule "regression/reconstruction/pami20_reconstruction"]
 	path = regression/reconstruction/pami20_reconstruction
 	url = git@github.com:pcr-upm/pami20_reconstruction.git
-[submodule "regression/gaze/saul24_gaze"]
-	path = regression/gaze/saul24_gaze
-	url = git@github.com:pcr-upm/saul24_gaze.git
 [submodule "regression/alignment/dad22_landmarks"]
 	path = regression/alignment/dad22_landmarks
 	url = git@github.com:bobetocalo/dad22_landmarks.git
@@ -61,9 +58,6 @@
 [submodule "regression/alignment/students_landmarks"]
 	path = regression/alignment/students_landmarks
 	url = git@github.com:pcr-upm/students_landmarks.git
-[submodule "regression/alignment/wdann_landmarks"]
-	path = regression/alignment/wdann_landmarks
-	url = git@github.com:pcr-upm/wdann_landmarks.git
 [submodule "detection/detr20_detection"]
 	path = detection/detr20_detection
 	url = git@github.com:pcr-upm/detr20_detection.git
