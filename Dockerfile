@@ -21,6 +21,8 @@ LABEL maintainer="roberto.valle@upm.es"
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/username/miniconda.sh
 RUN chmod +x /home/username/miniconda.sh
 RUN /home/username/miniconda.sh -b -p /home/username/conda
+RUN /home/username/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    /home/username/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 RUN /home/username/conda/bin/conda create --name framework python=3.6
 # Activate conda environment
 ENV PATH /home/username/conda/envs/framework/bin:/home/username/conda/bin:$PATH
