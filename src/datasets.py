@@ -205,24 +205,63 @@ class Mnist(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_filename(self, path, db, line):
+        import os
         import uuid
+        import tempfile
         from PIL import Image
         seq = GenericVideo()
         # parts = line.strip().split(';')
         # image = GenericImage(path + parts[0])
         # width, height = Image.open(image.filename).size
         # label = parts[1]
-        temp_filename = path + str(uuid.uuid4())+'.png'
-        img = line['image'].numpy()
-        img = np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img
+        temp_filename = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4()}.png')
+        img = np.array(line['image'])
+        img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
         Image.fromarray(img.astype(np.uint8), mode='RGB').save(temp_filename)
         image = GenericImage(temp_filename)
         height, width = img.shape[:2]
-        label = line['label'].numpy()
+        label = int(line['label'])
         image.tile = np.array([0, 0, width, height])
         obj = GenericObject()
         obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[int(label)]))
+        obj.add_category(GenericCategory(self._categories[label]))
+        image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class Shapes3D(Database):
+    def __init__(self):
+        from pcr_framework.categories.characters import Character as Oc
+        super().__init__()
+        self._names = ['shapes3d']
+        self._colors = get_palette(15)
+
+    def load_filename(self, path, db, line):
+        import os
+        import uuid
+        import tempfile
+        from PIL import Image
+        seq = GenericVideo()
+        # parts = line.strip().split(';')
+        # image = GenericImage(path + parts[0])
+        # width, height = Image.open(image.filename).size
+        # label = parts[1]
+        temp_filename = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4()}.png')
+        img = np.array(line['image'])
+        img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+        Image.fromarray(img.astype(np.uint8), mode='RGB').save(temp_filename)
+        image = GenericImage(temp_filename)
+        height, width = img.shape[:2]
+        image.tile = np.array([0, 0, width, height])
+        obj = GenericObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(int(line['label_floor_hue'])))
+        obj.add_category(GenericCategory(int(line['label_object_hue'])))
+        obj.add_category(GenericCategory(int(line['label_orientation'])))
+        obj.add_category(GenericCategory(int(line['label_scale'])))
+        obj.add_category(GenericCategory(int(line['label_shape'])))
+        obj.add_category(GenericCategory(int(line['label_wall_hue'])))
         image.add_object(obj)
         seq.add_image(image)
         return seq
