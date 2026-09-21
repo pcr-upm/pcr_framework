@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 from enum import Enum, unique
-from .annotations import GenericVideo, GenericImage, GenericObject, GenericCategory, GenericLandmark
+from .annotations import GenericVideo, GenericImage, AerialImage, GenericObject, PersonObject, DiffusionObject, GenericCategory, TemporalCategory, GenericLandmark
 from .categories import Name, Category as Oi
 
 
@@ -85,7 +85,6 @@ class Thumos(Database):
     def load_line(self, source, ref, path, line, load_images=True):
         import re
         import tempfile
-        from .annotations import TemporalCategory
         seq = GenericVideo(filename=path+'/'+line[0]+'.mp4')
         info = line[1]
         seq.frames = info.get('frame', 0)
@@ -126,7 +125,6 @@ class ActivityNet(Database):
     def load_line(self, source, ref, path, line, load_images=True):
         import re
         import tempfile
-        from .annotations import TemporalCategory
         # ActivityNet annotation keys omit the 'v_' prefix used by the raw video filenames
         seq = GenericVideo(filename=path+'/v_'+line[0]+'.mp4')
         info = line[1]
@@ -173,7 +171,6 @@ class Attach(Database):
     def load_line(self, source, ref, path, line, load_images=True):
         import re
         import tempfile
-        from .annotations import TemporalCategory
         # Each video lives in its own subfolder, e.g. path/00__0__shuttleFront/<name>.mp4
         video_directory = os.path.join(path, line[0])
         video_files = [f for f in os.listdir(video_directory) if f.lower().endswith('.mp4')] if os.path.isdir(video_directory) else []
@@ -283,7 +280,6 @@ class Fill50K(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from .annotations import DiffusionObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -316,7 +312,6 @@ class HPGEN(Database):
 
     def load_line(self, source, ref, path, line):
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -360,7 +355,6 @@ class COCO(Database):
         import itertools
         # from ast import literal_eval
         from datetime import datetime
-        from .annotations import PersonObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -407,7 +401,6 @@ class Agora(Database):
     def load_line(self, source, ref, path, line):
         import json
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -456,7 +449,6 @@ class PTS68(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -497,7 +489,6 @@ class COFW(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -541,7 +532,6 @@ class AFLW(Database):
 
     def load_line(self, source, ref, path, line):
         from scipy.spatial.transform import Rotation
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -585,7 +575,6 @@ class WFLW(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -630,7 +619,6 @@ class CatHeads(Database):
 
     def load_line(self, source, ref, path, line):
         import itertools
-        from .annotations import PersonObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -670,7 +658,6 @@ class FaceSynthetics(Database):
 
     def load_line(self, source, ref, path, line):
         import itertools
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -731,7 +718,6 @@ class DAD(Database):
     def load_line(self, source, ref, path, line):
         import itertools
         from scipy.spatial.transform import Rotation
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -792,7 +778,6 @@ class AFLW2000(Database):
         import uuid
         import itertools
         from scipy.spatial.transform import Rotation
-        from .annotations import DiffusionObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -846,7 +831,6 @@ class Pointing04(Database):
 
     def load_line(self, source, ref, path, line):
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -873,7 +857,6 @@ class Biwi(Database):
 
     def load_line(self, source, ref, path, line):
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -901,7 +884,6 @@ class Panoptic(Database):
 
     def load_line(self, source, ref, path, line):
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -928,7 +910,6 @@ class WIDER(Database):
 
     def load_line(self, source, ref, path, line):
         import json
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -952,18 +933,17 @@ class FER2013(Database):
     def __init__(self):
         from pcr_framework.categories.emotions import Emotion as Oe
         super().__init__()
-        self._namespaces = {'fer2013': {}}
+        self._namespaces = {'fer2013': {Sources.HUGFACE: '3una/Fer2013'}}
         self._categories = {0: Oe.FACE.ANGER, 1: Oe.FACE.DISGUST, 2: Oe.FACE.FEAR, 3: Oe.FACE.HAPPINESS, 4: Oe.FACE.NEUTRAL, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE}
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
         import uuid
-        from .annotations import PersonObject
         seq = GenericVideo()
-        temp_filename = path + str(uuid.uuid4())+'.png'
+        filename = os.path.join(path, f'{uuid.uuid4()}.png')
         img = line['image']
-        img.save(temp_filename)
-        image = GenericImage(temp_filename)
+        img.save(filename)
+        image = GenericImage(filename)
         height, width = img.size
         label = line['label']
         image.tile = np.array([0, 0, width, height])
@@ -989,7 +969,6 @@ class RAF(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        from .annotations import PersonObject
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -1032,7 +1011,6 @@ class AffectNet(Database):
     def load_line(self, source, ref, path, line):
         import itertools
         from scipy.spatial.transform import Rotation
-        from .annotations import PersonObject
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
         parts = line.strip().split(';')
@@ -1071,7 +1049,6 @@ class AffWild2(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1097,7 +1074,6 @@ class MultiPie(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        from .annotations import PersonObject
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1162,7 +1138,6 @@ class XView(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1202,7 +1177,6 @@ class XView2(Database):
         import json
         from shapely import wkt
         from .utils import geometry2numpy
-        from .annotations import AerialImage
         seq = GenericVideo()
         for time in ['pre_', 'post_']:
             filepath = line.strip()
@@ -1246,7 +1220,6 @@ class DOTA(Database):
 
     def load_line(self, source, ref, path, line):
         import rasterio
-        from .annotations import AerialImage
         seq = GenericVideo()
         filepath = line.strip()
         image = AerialImage(path + filepath)
@@ -1316,7 +1289,6 @@ class COWC(Database):
 
     def load_line(self, source, ref, path, line):
         import rasterio
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(',')
         if parts[0] == '#':
@@ -1350,7 +1322,6 @@ class CARPK(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1384,7 +1355,6 @@ class DRL(Database):
         self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1463,7 +1433,6 @@ class SpaceNet(Database):
     def load_line(self, source, ref, path, line):
         from shapely import wkt
         from .utils import geometry2numpy
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1580,7 +1549,6 @@ class SegESolarScene(Database):
     def load_line(self, source, ref, path, line):
         from shapely import wkt
         from .utils import geometry2numpy
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1613,7 +1581,6 @@ class SegGeoAIPanels(Database):
     def load_line(self, source, ref, path, line):
         from shapely import wkt
         from .utils import geometry2numpy
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1647,7 +1614,6 @@ class RecGeoAIPanels(Database):
     def load_line(self, source, ref, path, line):
         from shapely import wkt
         from .utils import geometry2numpy
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
@@ -1705,7 +1671,6 @@ class WorldView3(Database):
 
     def load_line(self, source, ref, path, line):
         import rasterio
-        from .annotations import AerialImage
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
