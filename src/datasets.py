@@ -220,7 +220,7 @@ class Mnist(Database):
         if source is Sources.TXT:
             parts = line.strip().split(';')
             if parts[0] == '#':
-                return
+                return seq
             filename = os.path.join(path, parts[0])
             image = GenericImage(filename)
             width, height = Image.open(image.filename).size
@@ -246,7 +246,7 @@ class Shapes3D(Database):
     def __init__(self):
         from pcr_framework.categories.characters import Character as Oc
         super().__init__()
-        self._namespaces = {'shapes3d': {}}
+        self._namespaces = {'shapes3d': {Sources.HUGFACE: 'eurecom-ds/shapes3d', Sources.TENSORFLOW: 'shapes3d'}}
         self._colors = get_palette(15)
 
     def load_line(self, source, ref, path, line):
@@ -283,7 +283,7 @@ class Fill50K(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -315,7 +315,7 @@ class HPGEN(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -359,7 +359,7 @@ class COCO(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -405,7 +405,7 @@ class Agora(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -453,7 +453,7 @@ class PTS68(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -493,7 +493,7 @@ class COFW(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -536,7 +536,7 @@ class AFLW(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -579,7 +579,7 @@ class WFLW(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts.pop(0))
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -623,7 +623,7 @@ class CatHeads(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts.pop(0))
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -662,7 +662,7 @@ class FaceSynthetics(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -722,7 +722,7 @@ class DAD(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -769,7 +769,8 @@ class AFLW2000(Database):
     def __init__(self):
         from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
         super().__init__()
-        self._namespaces = {'300wlp': {}, 'aflw2000': {}}
+        self._namespaces = {'300wlp': {Sources.TENSORFLOW: 'the300w_lp'}, 
+                            'aflw2000': {Sources.TENSORFLOW: 'aflw2k3d'}}
         self._landmarks = {Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166), Pf.LEAR: (101, 102, 103, 104, 105, 106), Pf.REAR: (112, 113, 114, 115, 116, 117), Pf.CHIN: (107, 108, 24, 110, 111)}
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
@@ -780,34 +781,39 @@ class AFLW2000(Database):
         from scipy.spatial.transform import Rotation
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
         seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return
-        filename = os.path.join(path, parts[0])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        # temp_filename = path + str(uuid.uuid4())+'.png'
-        # img = line['image'].numpy()
-        # lnds = line['landmarks_3d'].numpy()
-        # pose = line['pose_params'].numpy()
-        # Image.fromarray(img).save(temp_filename)
-        # image = GenericImage(temp_filename)
-        # height, width = img.shape[:2]
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+            image = GenericImage(filename)
+            width, height = Image.open(image.filename).size
+        else:
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            image = GenericImage(filename)
+            height, width = img.shape[:2]
         image.tile = np.array([0, 0, width, height])
         obj = DiffusionObject()
-        obj.add_category(GenericCategory(Name(parts[1])))  # Set identity as category to split the validation set
-        euler = [float(parts[3]), float(parts[2]), float(parts[4])]
-        obj.headpose = Rotation.from_euler('XYZ', euler, degrees=True).as_matrix()
-        # obj.headpose = Rotation.from_euler('YXZ', [pose[1], pose[0], pose[2]], degrees=False).as_matrix()
-        # Skip images with angles outside the range (-99, 99)
-        # if np.any(np.abs(euler) > 99):
-        #     return seq
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
+        if source is Sources.TXT:
+            obj.add_category(GenericCategory(Name(parts[1])))  # Set identity as category to split the validation set
+            euler = [float(parts[3]), float(parts[2]), float(parts[4])]
+            obj.headpose = Rotation.from_euler('XYZ', euler, degrees=True).as_matrix()
+            lnds = [[int(round(float(parts[2*idx+5]))), int(round(float(parts[2*idx+6])))] for idx in range(len(indices))]
+        else:
+            # pose = line['pose_params'].numpy()
+            # obj.headpose = Rotation.from_euler('YXZ', [pose[1], pose[0], pose[2]], degrees=False).as_matrix()
+            # # Skip images with angles outside the range (-99, 99)
+            # if np.any(np.abs(euler) > 99):
+            #     return seq
+            lnds = line['landmarks_3d'].numpy() if ref == '300wlp' else line['landmarks_68_3d_xy_normalized'].numpy()
         for idx in range(0, len(indices)):
             label = indices[idx]
             lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (int(round(float(parts[(2*idx)+5]))), int(round(float(parts[(2*idx)+6]))))
-            # pos = (int(round(float(lnds[idx][0]))), int(round(float(lnds[idx][1]))))
+            pos = (int(round(float(lnds[idx][0]))), int(round(float(lnds[idx][1]))))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
@@ -834,7 +840,7 @@ class Pointing04(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -860,7 +866,7 @@ class Biwi(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -887,7 +893,7 @@ class Panoptic(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -913,7 +919,7 @@ class WIDER(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -973,7 +979,7 @@ class RAF(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts.pop(0))
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1015,7 +1021,7 @@ class AffectNet(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts.pop(0))
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1052,7 +1058,7 @@ class AffWild2(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1077,7 +1083,7 @@ class MultiPie(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1103,7 +1109,7 @@ class ArckPadel(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         num_images = int(parts[1])
         if len(parts) == 2:
             return seq
@@ -1141,7 +1147,7 @@ class XView(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         num_predictions = int(parts[1])
@@ -1292,7 +1298,7 @@ class COWC(Database):
         seq = GenericVideo()
         parts = line.strip().split(',')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         num_vehicles = int(parts[1])
@@ -1325,7 +1331,7 @@ class CARPK(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1358,7 +1364,7 @@ class DRL(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1402,7 +1408,7 @@ class NWPU(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1436,7 +1442,7 @@ class SpaceNet(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1469,7 +1475,7 @@ class Cityscapes(Database):
         seq = GenericVideo()
         parts = line.strip().split('\t')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1512,7 +1518,7 @@ class LIP(Database):
         seq = GenericVideo()
         parts = line.strip().split(' ')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1552,7 +1558,7 @@ class SegESolarScene(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1584,7 +1590,7 @@ class SegGeoAIPanels(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1617,7 +1623,7 @@ class RecGeoAIPanels(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
@@ -1648,7 +1654,7 @@ class StanfordCars(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
@@ -1674,7 +1680,7 @@ class WorldView3(Database):
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
-            return
+            return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         src_raster = rasterio.open(image.filename, 'r')
