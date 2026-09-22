@@ -222,17 +222,15 @@ class Mnist(Database):
             if parts[0] == '#':
                 return seq
             filename = os.path.join(path, parts[0])
-            image = GenericImage(filename)
-            width, height = Image.open(image.filename).size
             label = parts[1]
         else:
             filename = os.path.join(path, f'{uuid.uuid4()}.png')
             img = np.array(line['image'])
             img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
             Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            image = GenericImage(filename)
-            height, width = img.shape[:2]
             label = int(line['label'])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = GenericObject()
         obj.bb = (0, 0, width, height)
@@ -786,15 +784,13 @@ class AFLW2000(Database):
             if parts[0] == '#':
                 return seq
             filename = os.path.join(path, parts[0])
-            image = GenericImage(filename)
-            width, height = Image.open(image.filename).size
         else:
             filename = os.path.join(path, f'{uuid.uuid4()}.png')
             img = np.array(line['image'])
             img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
             Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            image = GenericImage(filename)
-            height, width = img.shape[:2]
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = DiffusionObject()
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
@@ -909,11 +905,12 @@ class Panoptic(Database):
 class WIDER(Database):
     def __init__(self):
         super().__init__()
-        self._namespaces = {'wider': {Sources.TENSORFLOW: 'wider_face'}}
+        self._namespaces = {'wider': {Sources.HUGFACE: 'CUHK-CSE/wider_face', Sources.TENSORFLOW: 'wider_face'}}
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
+        import uuid
         import json
         seq = GenericVideo()
         if source is Sources.TXT:
@@ -922,7 +919,7 @@ class WIDER(Database):
                 return seq
             filename = os.path.join(path, parts[0])
         else:
-            filename = os.path.join(path, line['image/filename'])
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
             img = np.array(line['image'])
             img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
             Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
@@ -930,10 +927,10 @@ class WIDER(Database):
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        num_faces = int(parts[2]) if source is Sources.TXT else len(faces)
+        num_faces = int(parts[2]) if source is Sources.TXT else len(faces['bbox'])
         for idx in range(0, num_faces):
             obj = PersonObject()
-            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces[idx], dtype=float) 
+            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces['bbox'][idx], dtype=float) 
             obj.bb = (int(round(float(bbox[0]))), int(round(float(bbox[1]))), int(round(float(bbox[0]+bbox[2]))), int(round(float(bbox[1]+bbox[3]))))
             obj.add_category(GenericCategory(self._categories[0]))
             image.add_object(obj)
