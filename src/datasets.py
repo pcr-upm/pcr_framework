@@ -909,24 +909,31 @@ class Panoptic(Database):
 class WIDER(Database):
     def __init__(self):
         super().__init__()
-        self._namespaces = {'wider': {}}
+        self._namespaces = {'wider': {Sources.TENSORFLOW: 'wider_face'}}
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
         import json
         seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+        else:
+            filename = os.path.join(path, line['image/filename'])
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            faces = line['faces']
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        num_faces = int(parts[2])
+        num_faces = int(parts[2]) if source is Sources.TXT else len(faces)
         for idx in range(0, num_faces):
             obj = PersonObject()
-            bbox = np.array(json.loads(parts[(3+idx)]), dtype=float)
+            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces[idx], dtype=float) 
             obj.bb = (int(round(float(bbox[0]))), int(round(float(bbox[1]))), int(round(float(bbox[0]+bbox[2]))), int(round(float(bbox[1]+bbox[3]))))
             obj.add_category(GenericCategory(self._categories[0]))
             image.add_object(obj)
