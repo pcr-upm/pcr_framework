@@ -800,16 +800,15 @@ class AFLW2000(Database):
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
         if source is Sources.TXT:
             obj.add_category(GenericCategory(Name(parts[1])))  # Set identity as category to split the validation set
-            euler = [float(parts[3]), float(parts[2]), float(parts[4])]
-            obj.headpose = Rotation.from_euler('XYZ', euler, degrees=True).as_matrix()
+            obj.headpose = Rotation.from_euler('XYZ', [float(parts[3]), float(parts[2]), float(parts[4])], degrees=True).as_matrix()
             lnds = [[int(round(float(parts[2*idx+5]))), int(round(float(parts[2*idx+6])))] for idx in range(len(indices))]
         else:
-            # pose = line['pose_params'].numpy()
-            # obj.headpose = Rotation.from_euler('YXZ', [pose[1], pose[0], pose[2]], degrees=False).as_matrix()
-            # # Skip images with angles outside the range (-99, 99)
-            # if np.any(np.abs(euler) > 99):
-            #     return seq
-            lnds = line['landmarks_3d'].numpy() if ref == '300wlp' else line['landmarks_68_3d_xy_normalized'].numpy()
+            if ref == '300wlp':
+                pose, lnds = line['pose_params'].numpy(), line['landmarks_3d'].numpy()
+                obj.headpose = Rotation.from_euler('YXZ', [float(pose[1]), float(pose[0]), float(pose[2])], degrees=False).as_matrix()
+            else:
+                lnds = line['landmarks_68_3d_xy_normalized'].numpy()
+            lnds *= np.array([width, height])
         for idx in range(0, len(indices)):
             label = indices[idx]
             lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
