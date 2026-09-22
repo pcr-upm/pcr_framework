@@ -12,6 +12,7 @@ from pathlib import Path
 from enum import Enum, unique
 from .annotations import GenericVideo, GenericImage, AerialImage, GenericObject, PersonObject, DiffusionObject, GenericCategory, TemporalCategory, GenericLandmark
 from .categories import Name, Category as Oi
+from .constants import Modes
 
 
 @unique
@@ -58,8 +59,8 @@ class Database(abc.ABC):
     def load_line(self, source, ref, path, line):
         pass
 
-    def get_namespace(self, source, ref):
-        return self._namespaces[ref][source]
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train'
 
     def get_names(self):
         return list(self._namespaces.keys())
@@ -214,6 +215,9 @@ class Mnist(Database):
         self._categories = {0: Oc.CHARACTER.ZERO, 1: Oc.CHARACTER.ONE, 2: Oc.CHARACTER.TWO, 3: Oc.CHARACTER.THREE, 4: Oc.CHARACTER.FOUR, 5: Oc.CHARACTER.FIVE, 6: Oc.CHARACTER.SIX, 7: Oc.CHARACTER.SEVEN, 8: Oc.CHARACTER.EIGHT, 9: Oc.CHARACTER.NINE}
         self._colors = get_palette(len(self._categories))
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
+    
     def load_line(self, source, ref, path, line):
         import uuid
         seq = GenericVideo()
@@ -909,6 +913,9 @@ class WIDER(Database):
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
+    
     def load_line(self, source, ref, path, line):
         import uuid
         import json
@@ -946,6 +953,9 @@ class FER2013(Database):
         self._categories = {0: Oe.FACE.ANGER, 1: Oe.FACE.DISGUST, 2: Oe.FACE.FEAR, 3: Oe.FACE.HAPPINESS, 4: Oe.FACE.NEUTRAL, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE}
         self._colors = get_palette(len(self._categories))
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
+    
     def load_line(self, source, ref, path, line):
         import uuid
         seq = GenericVideo()
