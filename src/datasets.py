@@ -206,44 +206,6 @@ class Attach(Database):
         return seq
 
 
-class Mnist(Database):
-    def __init__(self):
-        from pcr_framework.categories.characters import Character as Oc
-        super().__init__()
-        self._namespaces = {'mnist': {Sources.HUGFACE: 'ylecun/mnist', Sources.TENSORFLOW: 'mnist'}, 
-                            'svhn': {Sources.HUGFACE: 'dpdl-benchmark/svhn_cropped', Sources.TENSORFLOW: 'svhn_cropped'}}
-        self._categories = {0: Oc.CHARACTER.ZERO, 1: Oc.CHARACTER.ONE, 2: Oc.CHARACTER.TWO, 3: Oc.CHARACTER.THREE, 4: Oc.CHARACTER.FOUR, 5: Oc.CHARACTER.FIVE, 6: Oc.CHARACTER.SIX, 7: Oc.CHARACTER.SEVEN, 8: Oc.CHARACTER.EIGHT, 9: Oc.CHARACTER.NINE}
-        self._colors = get_palette(len(self._categories))
-
-    def get_namespace(self, mode, source, ref):
-        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
-    
-    def load_line(self, source, ref, path, line):
-        import uuid
-        seq = GenericVideo()
-        if source is Sources.TXT:
-            parts = line.strip().split(';')
-            if parts[0] == '#':
-                return seq
-            filename = os.path.join(path, parts[0])
-            label = parts[1]
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            label = int(line['label'])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        obj = GenericObject()
-        obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[label]))
-        image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
 class Shapes3D(Database):
     def __init__(self):
         from pcr_framework.categories.characters import Character as Oc
@@ -328,67 +290,6 @@ class HPGEN(Database):
         # obj.headpose = Rotation.from_euler('YXZ', [float(parts[6]), float(parts[7]), float(parts[8])], degrees=True).as_matrix()
         obj.headpose = Rotation.from_euler('YXZ', [-float(parts[6]), float(parts[7]), 0.0], degrees=True).as_matrix()
         image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
-class COCO(Database):
-    def __init__(self):
-        from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
-        from pcr_framework.categories.vehicles import Vehicle as Ov
-        from pcr_framework.categories.outdoor import Outdoor as Oo
-        from pcr_framework.categories.animals import Animal as Oa
-        from pcr_framework.categories.accessories import Accessory as Oq
-        from pcr_framework.categories.sports import Sport as Os
-        from pcr_framework.categories.kitchen import Kitchen as Ok
-        from pcr_framework.categories.food import Food as Of
-        from pcr_framework.categories.furniture import Furniture as Ow
-        from pcr_framework.categories.electronic import Electronic as Oe
-        from pcr_framework.categories.appliance import Appliance as Oj
-        from pcr_framework.categories.indoor import Indoor as Oy
-        super().__init__()
-        self._namespaces = {'coco': {Sources.HUGFACE: 'srishti-kaushik/COCO-2017'}}
-        self._landmarks = {Pf.NOSE: (0,), Pf.LEYE: (1,), Pf.REYE: (2,), Pf.LEAR: (3,), Pf.REAR: (4,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,)}
-        self._categories = {1: Oi.PERSON, 2: Ov.VEHICLE.BICYCLE, 3: Ov.VEHICLE.CAR, 4: Ov.VEHICLE.MOTORCYCLE, 5: Ov.VEHICLE.AIRPLANE, 6: Ov.VEHICLE.BUS, 7: Ov.VEHICLE.TRAIN, 8: Ov.VEHICLE.TRUCK, 9: Ov.VEHICLE.BOAT, 10: Oo.OUTDOOR.TRAFFIC_LIGHT, 11: Oo.OUTDOOR.FIRE_HYDRANT, 12: Oo.OUTDOOR.STREET_SIGN, 13: Oo.OUTDOOR.STOP_SIGN, 14: Oo.OUTDOOR.PARKING_METER, 15: Oo.OUTDOOR.BENCH, 16: Oa.ANIMAL.BIRD, 17: Oa.ANIMAL.CAT, 18: Oa.ANIMAL.DOG, 19: Oa.ANIMAL.HORSE, 20: Oa.ANIMAL.SHEEP, 21: Oa.ANIMAL.COW, 22: Oa.ANIMAL.ELEPHANT, 23: Oa.ANIMAL.BEAR, 24: Oa.ANIMAL.ZEBRA, 25: Oa.ANIMAL.GIRAFFE, 26: Oq.ACCESSORY.HAT, 27: Oq.ACCESSORY.BACKPACK, 28: Oq.ACCESSORY.UMBRELLA, 29: Oq.ACCESSORY.SHOE, 30: Oq.ACCESSORY.EYE_GLASSES, 31: Oq.ACCESSORY.HANDBAG, 32: Oq.ACCESSORY.TIE, 33: Oq.ACCESSORY.SUITCASE, 34: Os.SPORTS.FRISBEE, 35: Os.SPORTS.SKIS, 36: Os.SPORTS.SNOWBOARD, 37: Os.SPORTS.SPORTS_BALL, 38: Os.SPORTS.KITE, 39: Os.SPORTS.BASEBALL_BAT, 40: Os.SPORTS.BASEBALL_GLOVE, 41: Os.SPORTS.SKATEBOARD, 42: Os.SPORTS.SURFBOARD, 43: Os.SPORTS.TENNIS_RACKET, 44: Ok.KITCHEN.BOTTLE, 45: Ok.KITCHEN.PLATE, 46: Ok.KITCHEN.WINE_GLASS, 47: Ok.KITCHEN.CUP, 48: Ok.KITCHEN.FORK, 49: Ok.KITCHEN.KNIFE, 50: Ok.KITCHEN.SPOON, 51: Ok.KITCHEN.BOWL, 52: Of.FOOD.BANANA, 53: Of.FOOD.APPLE, 54: Of.FOOD.SANDWICH, 55: Of.FOOD.ORANGE, 56: Of.FOOD.BROCCOLI, 57: Of.FOOD.CARROT, 58: Of.FOOD.HOT_DOG, 59: Of.FOOD.PIZZA, 60: Of.FOOD.DONUT, 61: Of.FOOD.CAKE, 62: Ow.FURNITURE.CHAIR, 63: Ow.FURNITURE.COUCH, 64: Ow.FURNITURE.POTTED_PLANT, 65: Ow.FURNITURE.BED, 66: Ow.FURNITURE.MIRROR, 67: Ow.FURNITURE.DINING_TABLE, 68: Ow.FURNITURE.WINDOW, 69: Ow.FURNITURE.DESK, 70: Ow.FURNITURE.TOILET, 71: Ow.FURNITURE.DOOR, 72: Oe.ELECTRONIC.TV, 73: Oe.ELECTRONIC.LAPTOP, 74: Oe.ELECTRONIC.MOUSE, 75: Oe.ELECTRONIC.REMOTE, 76: Oe.ELECTRONIC.KEYBOARD, 77: Oe.ELECTRONIC.CELL_PHONE, 78: Oj.APPLIANCE.MICROWAVE, 79: Oj.APPLIANCE.OVEN, 80: Oj.APPLIANCE.TOASTER, 81: Oj.APPLIANCE.SINK, 82: Oj.APPLIANCE.REFRIGERATOR, 83: Oj.APPLIANCE.BLENDER, 84: Oy.INDOOR.BOOK, 85: Oy.INDOOR.CLOCK, 86: Oy.INDOOR.VASE, 87: Oy.INDOOR.SCISSORS, 88: Oy.INDOOR.TEDDY_BEAR, 89: Oy.INDOOR.HAIR_DRIER, 90: Oy.INDOOR.TOOTHBRUSH, 91: Oy.INDOOR.HAIR_BRUSH}
-        self._colors = get_palette(len(self._categories))
-
-    def get_namespace(self, mode, source, ref):
-        return self._namespaces[ref][source], 'images_train2017' if mode is Modes.TRAIN else 'images_val2017', 'train'
-    
-    def load_line(self, source, ref, path, line):
-        import json
-        import itertools
-        # from ast import literal_eval
-        from datetime import datetime
-        from pcr_framework.regression.alignment.landmarks import lps
-        seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        image.timestamp = datetime.strptime(parts[2], '%Y-%m-%d %H:%M:%S')
-        for idx in range(0, int(parts[3])):
-            bbox = np.array(json.loads(parts[(5*idx)+5]), dtype=float)
-            # contours = literal_eval(parts[(5*idx)+6])
-            landmarks = np.array(json.loads(parts[(5*idx)+8]), dtype=int)
-            obj = GenericObject() if landmarks.size == 0 else PersonObject()
-            obj.id = int(parts[(5*idx)+4])
-            obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
-            # obj.multipolygon = [np.array([[[pt[0], pt[1]]] for pt in list(zip(contour[::2], contour[1::2]))], dtype=float) for contour in contours]
-            obj.add_category(GenericCategory(list(self._categories.values())[int(parts[(5*idx)+7])-1]))
-            # if not isinstance(obj, PersonObject):
-            #     continue
-            # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
-            #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
-            #     vis = int(landmarks[(3*label)+2])
-            #     if vis == 0:  # landmark is not in the image
-            #         continue
-            #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis == 2)), lps[type(lp)])
-            image.add_object(obj)
         seq.add_image(image)
         return seq
 
@@ -948,35 +849,6 @@ class WIDER(Database):
         return seq
 
 
-class FER2013(Database):
-    def __init__(self):
-        from pcr_framework.categories.emotions import Emotion as Oe
-        super().__init__()
-        self._namespaces = {'fer2013': {Sources.HUGFACE: '3una/Fer2013'}}
-        self._categories = {0: Oe.FACE.ANGER, 1: Oe.FACE.DISGUST, 2: Oe.FACE.FEAR, 3: Oe.FACE.HAPPINESS, 4: Oe.FACE.NEUTRAL, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE}
-        self._colors = get_palette(len(self._categories))
-
-    def get_namespace(self, mode, source, ref):
-        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
-    
-    def load_line(self, source, ref, path, line):
-        import uuid
-        seq = GenericVideo()
-        filename = os.path.join(path, f'{uuid.uuid4()}.png')
-        img = line['image']
-        img.save(filename)
-        image = GenericImage(filename)
-        height, width = img.size
-        label = line['label']
-        image.tile = np.array([0, 0, width, height])
-        obj = PersonObject()
-        obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[int(label)]))
-        image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
 class RAF(Database):
     def __init__(self):
         from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
@@ -1057,31 +929,6 @@ class AffectNet(Database):
         obj.add_attribute(GenericCategory(self._race[int(parts.pop(0))]))
         obj.add_attribute(GenericCategory(self._age[int(parts.pop(0))]))
         obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
-        image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
-class AffWild2(Database):
-    def __init__(self):
-        from pcr_framework.categories.emotions import Emotion as Oe
-        super().__init__()
-        self._namespaces = {'affwild2': {}}
-        self._categories = {0: Oe.FACE.NEUTRAL, 1: Oe.FACE.ANGER, 2: Oe.FACE.DISGUST, 3: Oe.FACE.FEAR, 4: Oe.FACE.HAPPINESS, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE, 7: Oe.FACE.OTHER}
-        self._colors = get_palette(len(self._categories))
-
-    def load_line(self, source, ref, path, line):
-        seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        obj = PersonObject()
-        obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[int(parts[3])]))
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1474,6 +1321,70 @@ class SpaceNet(Database):
         seq.add_image(image)
         return seq
 
+# ################################################################
+#                      SEGMENTATION DATASETS
+# ################################################################
+
+class COCO(Database):
+    def __init__(self):
+        from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
+        from pcr_framework.categories.vehicles import Vehicle as Ov
+        from pcr_framework.categories.outdoor import Outdoor as Oo
+        from pcr_framework.categories.animals import Animal as Oa
+        from pcr_framework.categories.accessories import Accessory as Oq
+        from pcr_framework.categories.sports import Sport as Os
+        from pcr_framework.categories.kitchen import Kitchen as Ok
+        from pcr_framework.categories.food import Food as Of
+        from pcr_framework.categories.furniture import Furniture as Ow
+        from pcr_framework.categories.electronic import Electronic as Oe
+        from pcr_framework.categories.appliance import Appliance as Oj
+        from pcr_framework.categories.indoor import Indoor as Oy
+        super().__init__()
+        self._namespaces = {'coco': {Sources.HUGFACE: 'srishti-kaushik/COCO-2017'}}
+        self._landmarks = {Pf.NOSE: (0,), Pf.LEYE: (1,), Pf.REYE: (2,), Pf.LEAR: (3,), Pf.REAR: (4,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,)}
+        self._categories = {1: Oi.PERSON, 2: Ov.VEHICLE.BICYCLE, 3: Ov.VEHICLE.CAR, 4: Ov.VEHICLE.MOTORCYCLE, 5: Ov.VEHICLE.AIRPLANE, 6: Ov.VEHICLE.BUS, 7: Ov.VEHICLE.TRAIN, 8: Ov.VEHICLE.TRUCK, 9: Ov.VEHICLE.BOAT, 10: Oo.OUTDOOR.TRAFFIC_LIGHT, 11: Oo.OUTDOOR.FIRE_HYDRANT, 12: Oo.OUTDOOR.STREET_SIGN, 13: Oo.OUTDOOR.STOP_SIGN, 14: Oo.OUTDOOR.PARKING_METER, 15: Oo.OUTDOOR.BENCH, 16: Oa.ANIMAL.BIRD, 17: Oa.ANIMAL.CAT, 18: Oa.ANIMAL.DOG, 19: Oa.ANIMAL.HORSE, 20: Oa.ANIMAL.SHEEP, 21: Oa.ANIMAL.COW, 22: Oa.ANIMAL.ELEPHANT, 23: Oa.ANIMAL.BEAR, 24: Oa.ANIMAL.ZEBRA, 25: Oa.ANIMAL.GIRAFFE, 26: Oq.ACCESSORY.HAT, 27: Oq.ACCESSORY.BACKPACK, 28: Oq.ACCESSORY.UMBRELLA, 29: Oq.ACCESSORY.SHOE, 30: Oq.ACCESSORY.EYE_GLASSES, 31: Oq.ACCESSORY.HANDBAG, 32: Oq.ACCESSORY.TIE, 33: Oq.ACCESSORY.SUITCASE, 34: Os.SPORTS.FRISBEE, 35: Os.SPORTS.SKIS, 36: Os.SPORTS.SNOWBOARD, 37: Os.SPORTS.SPORTS_BALL, 38: Os.SPORTS.KITE, 39: Os.SPORTS.BASEBALL_BAT, 40: Os.SPORTS.BASEBALL_GLOVE, 41: Os.SPORTS.SKATEBOARD, 42: Os.SPORTS.SURFBOARD, 43: Os.SPORTS.TENNIS_RACKET, 44: Ok.KITCHEN.BOTTLE, 45: Ok.KITCHEN.PLATE, 46: Ok.KITCHEN.WINE_GLASS, 47: Ok.KITCHEN.CUP, 48: Ok.KITCHEN.FORK, 49: Ok.KITCHEN.KNIFE, 50: Ok.KITCHEN.SPOON, 51: Ok.KITCHEN.BOWL, 52: Of.FOOD.BANANA, 53: Of.FOOD.APPLE, 54: Of.FOOD.SANDWICH, 55: Of.FOOD.ORANGE, 56: Of.FOOD.BROCCOLI, 57: Of.FOOD.CARROT, 58: Of.FOOD.HOT_DOG, 59: Of.FOOD.PIZZA, 60: Of.FOOD.DONUT, 61: Of.FOOD.CAKE, 62: Ow.FURNITURE.CHAIR, 63: Ow.FURNITURE.COUCH, 64: Ow.FURNITURE.POTTED_PLANT, 65: Ow.FURNITURE.BED, 66: Ow.FURNITURE.MIRROR, 67: Ow.FURNITURE.DINING_TABLE, 68: Ow.FURNITURE.WINDOW, 69: Ow.FURNITURE.DESK, 70: Ow.FURNITURE.TOILET, 71: Ow.FURNITURE.DOOR, 72: Oe.ELECTRONIC.TV, 73: Oe.ELECTRONIC.LAPTOP, 74: Oe.ELECTRONIC.MOUSE, 75: Oe.ELECTRONIC.REMOTE, 76: Oe.ELECTRONIC.KEYBOARD, 77: Oe.ELECTRONIC.CELL_PHONE, 78: Oj.APPLIANCE.MICROWAVE, 79: Oj.APPLIANCE.OVEN, 80: Oj.APPLIANCE.TOASTER, 81: Oj.APPLIANCE.SINK, 82: Oj.APPLIANCE.REFRIGERATOR, 83: Oj.APPLIANCE.BLENDER, 84: Oy.INDOOR.BOOK, 85: Oy.INDOOR.CLOCK, 86: Oy.INDOOR.VASE, 87: Oy.INDOOR.SCISSORS, 88: Oy.INDOOR.TEDDY_BEAR, 89: Oy.INDOOR.HAIR_DRIER, 90: Oy.INDOOR.TOOTHBRUSH, 91: Oy.INDOOR.HAIR_BRUSH}
+        self._colors = get_palette(len(self._categories))
+
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], 'images_train2017' if mode is Modes.TRAIN else 'images_val2017', 'train'
+    
+    def load_line(self, source, ref, path, line):
+        import json
+        import itertools
+        # from ast import literal_eval
+        from datetime import datetime
+        from pcr_framework.regression.alignment.landmarks import lps
+        seq = GenericVideo()
+        parts = line.strip().split(';')
+        if parts[0] == '#':
+            return seq
+        filename = os.path.join(path, parts[0])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        image.timestamp = datetime.strptime(parts[2], '%Y-%m-%d %H:%M:%S')
+        for idx in range(0, int(parts[3])):
+            bbox = np.array(json.loads(parts[(5*idx)+5]), dtype=float)
+            # contours = literal_eval(parts[(5*idx)+6])
+            landmarks = np.array(json.loads(parts[(5*idx)+8]), dtype=int)
+            obj = GenericObject() if landmarks.size == 0 else PersonObject()
+            obj.id = int(parts[(5*idx)+4])
+            obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
+            # obj.multipolygon = [np.array([[[pt[0], pt[1]]] for pt in list(zip(contour[::2], contour[1::2]))], dtype=float) for contour in contours]
+            obj.add_category(GenericCategory(list(self._categories.values())[int(parts[(5*idx)+7])-1]))
+            # if not isinstance(obj, PersonObject):
+            #     continue
+            # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
+            #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
+            #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
+            #     vis = int(landmarks[(3*label)+2])
+            #     if vis == 0:  # landmark is not in the image
+            #         continue
+            #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis == 2)), lps[type(lp)])
+            image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
 
 class Cityscapes(Database):
     def __init__(self):
@@ -1487,7 +1398,7 @@ class Cityscapes(Database):
 
     def load_line(self, source, ref, path, line):
         import uuid
-        from .utils import load_geoimage, mask2contours
+        from .utils import mask2contours
         seq = GenericVideo()
         if source is Sources.TXT:
             parts = line.strip().split('\t')
@@ -1505,12 +1416,16 @@ class Cityscapes(Database):
         if source is Sources.TXT:
             if len(parts) == 1:
                 return seq
-            sem_image = GenericImage(os.path.join(path, parts[1]))
+            filename = os.path.join(path, parts[1])
         else:
             if 'semantic_segmentation' not in line:
                 return seq
-            sem_image = GenericImage(os.path.join(line['semantic_segmentation'], parts[1]))
-        img = Image.open(sem_image.filename)
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['semantic_segmentation'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+        sem_image = GenericImage(filename)
+        img = np.array(Image.open(sem_image.filename))
         temp = img.copy()
         label_mapping = {0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: 0, 8: 1, 9: -1, 10: -1, 11: 2, 12: 3, 13: 4, 14: -1, 15: -1, 16: -1, 17: 5, 18: -1, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: -1, 30: -1, 31: 16, 32: 17, 33: 18}
         for key, value in label_mapping.items():
@@ -1542,7 +1457,7 @@ class LIP(Database):
         self._colors = [(0.0, 0.0, 0.0), (127.5, 0.0, 0.0), (254.00390625, 0.0, 0.0), (0.0, 84.66796875, 0.0), (169.3359375, 0.0, 50.80078125), (254.00390625, 84.66796875, 0.0), (0.0, 0.0, 84.66796875), (0.0, 118.53515625, 220.13671875), (84.66796875, 84.66796875, 0.0), (0.0, 84.66796875, 84.66796875), (84.66796875, 50.80078125, 0.0), (51.796875, 85.6640625, 127.5), (0.0, 127.5, 0.0), (0.0, 0.0, 254.00390625), (50.80078125, 169.3359375, 220.13671875), (0.0, 254.00390625, 254.00390625), (84.66796875, 254.00390625, 169.3359375), (169.3359375, 254.00390625, 84.66796875), (254.00390625, 254.00390625, 0.0), (254.00390625, 169.3359375, 0.0)]
 
     def load_line(self, source, ref, path, line):
-        from .utils import load_geoimage, mask2contours
+        from .utils import mask2contours
         seq = GenericVideo()
         parts = line.strip().split(' ')
         if parts[0] == '#':
@@ -1551,24 +1466,25 @@ class LIP(Database):
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        if len(parts) > 1:
-            aux_filepath = parts[1]
-            aux_image = GenericImage(path + aux_filepath)
-            img, _ = load_geoimage(aux_image.filename)
-            categories = list(np.unique(img))
-            contours, labels = [], []
-            for category in categories:
-                mask = np.where((img == category), 255, 0).astype(np.uint8)
-                for contour in mask2contours(mask):
-                    contours.append(contour)
-                    labels.append(str(category))
-            for index in range(len(contours)):
-                obj = GenericObject()
-                bbox = cv2.boundingRect(contours[index])
-                obj.bb = (bbox[0], bbox[1], bbox[2]+bbox[0], bbox[3]+bbox[1])
-                obj.multipolygon = [contours[index]]
-                obj.add_category(GenericCategory(Name(labels[index])))
-                image.add_object(obj)
+        if len(parts) == 1:
+            return seq
+        filename = os.path.join(path, parts[1])
+        sem_image = GenericImage(filename)
+        img = np.array(Image.open(sem_image.filename))
+        categories = list(np.unique(img))
+        contours, labels = [], []
+        for category in categories:
+            mask = np.where((img == category), 255, 0).astype(np.uint8)
+            for contour in mask2contours(mask):
+                contours.append(contour)
+                labels.append(str(category))
+        for index in range(len(contours)):
+            obj = GenericObject()
+            bbox = cv2.boundingRect(contours[index])
+            obj.bb = (bbox[0], bbox[1], bbox[2]+bbox[0], bbox[3]+bbox[1])
+            obj.multipolygon = [contours[index]]
+            obj.add_category(GenericCategory(Name(labels[index])))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
@@ -1591,16 +1507,17 @@ class SegESolarScene(Database):
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        if len(parts) > 1:
-            for i in range(1, len(parts), 2):
-                geom = wkt.loads(parts[i])
-                if geom.is_empty:
-                    continue
-                obj = GenericObject()
-                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
-                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
-                obj.add_category(GenericCategory(self._categories[parts[i+1]]))
-                image.add_object(obj)
+        if len(parts) == 1:
+            return seq
+        for i in range(1, len(parts), 2):
+            geom = wkt.loads(parts[i])
+            if geom.is_empty:
+                continue
+            obj = GenericObject()
+            obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
+            obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+            obj.add_category(GenericCategory(self._categories[parts[i+1]]))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
@@ -1623,19 +1540,23 @@ class SegGeoAIPanels(Database):
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        if len(parts) > 1:
-            for i in range(1, len(parts)):
-                geom = wkt.loads(parts[i])
-                if geom.is_empty:
-                    continue
-                obj = GenericObject()
-                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
-                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
-                obj.add_category(GenericCategory(self._categories[0]))
-                image.add_object(obj)
+        if len(parts) == 1:
+            return seq
+        for i in range(1, len(parts)):
+            geom = wkt.loads(parts[i])
+            if geom.is_empty:
+                continue
+            obj = GenericObject()
+            obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
+            obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+            obj.add_category(GenericCategory(self._categories[0]))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
+# ################################################################
+#                     CLASSIFICATION DATASETS
+# ################################################################
 
 class RecGeoAIPanels(Database):
     def __init__(self):
@@ -1666,6 +1587,98 @@ class RecGeoAIPanels(Database):
                 obj.multipolygon = [contour for contour in geometry2numpy(geom)]
                 obj.add_category(GenericCategory(self._categories[parts[i+1]]))
                 image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class Mnist(Database):
+    def __init__(self):
+        from pcr_framework.categories.characters import Character as Oc
+        super().__init__()
+        self._namespaces = {'mnist': {Sources.HUGFACE: 'ylecun/mnist', Sources.TENSORFLOW: 'mnist'}, 
+                            'svhn': {Sources.HUGFACE: 'dpdl-benchmark/svhn_cropped', Sources.TENSORFLOW: 'svhn_cropped'}}
+        self._categories = {0: Oc.CHARACTER.ZERO, 1: Oc.CHARACTER.ONE, 2: Oc.CHARACTER.TWO, 3: Oc.CHARACTER.THREE, 4: Oc.CHARACTER.FOUR, 5: Oc.CHARACTER.FIVE, 6: Oc.CHARACTER.SIX, 7: Oc.CHARACTER.SEVEN, 8: Oc.CHARACTER.EIGHT, 9: Oc.CHARACTER.NINE}
+        self._colors = get_palette(len(self._categories))
+
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
+    
+    def load_line(self, source, ref, path, line):
+        import uuid
+        seq = GenericVideo()
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+            label = parts[1]
+        else:
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            label = int(line['label'])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        obj = GenericObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(self._categories[label]))
+        image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class FER2013(Database):
+    def __init__(self):
+        from pcr_framework.categories.emotions import Emotion as Oe
+        super().__init__()
+        self._namespaces = {'fer2013': {Sources.HUGFACE: '3una/Fer2013'}}
+        self._categories = {0: Oe.FACE.ANGER, 1: Oe.FACE.DISGUST, 2: Oe.FACE.FEAR, 3: Oe.FACE.HAPPINESS, 4: Oe.FACE.NEUTRAL, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE}
+        self._colors = get_palette(len(self._categories))
+
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
+    
+    def load_line(self, source, ref, path, line):
+        import uuid
+        seq = GenericVideo()
+        filename = os.path.join(path, f'{uuid.uuid4()}.png')
+        img = line['image']
+        img.save(filename)
+        image = GenericImage(filename)
+        height, width = img.size
+        label = line['label']
+        image.tile = np.array([0, 0, width, height])
+        obj = PersonObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(self._categories[int(label)]))
+        image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class AffWild2(Database):
+    def __init__(self):
+        from pcr_framework.categories.emotions import Emotion as Oe
+        super().__init__()
+        self._namespaces = {'affwild2': {}}
+        self._categories = {0: Oe.FACE.NEUTRAL, 1: Oe.FACE.ANGER, 2: Oe.FACE.DISGUST, 3: Oe.FACE.FEAR, 4: Oe.FACE.HAPPINESS, 5: Oe.FACE.SADNESS, 6: Oe.FACE.SURPRISE, 7: Oe.FACE.OTHER}
+        self._colors = get_palette(len(self._categories))
+
+    def load_line(self, source, ref, path, line):
+        seq = GenericVideo()
+        parts = line.strip().split(';')
+        if parts[0] == '#':
+            return seq
+        filename = os.path.join(path, parts[0])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        obj = PersonObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(self._categories[int(parts[3])]))
+        image.add_object(obj)
         seq.add_image(image)
         return seq
 
