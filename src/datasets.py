@@ -347,11 +347,14 @@ class COCO(Database):
         from pcr_framework.categories.appliance import Appliance as Oj
         from pcr_framework.categories.indoor import Indoor as Oy
         super().__init__()
-        self._namespaces = {'coco': {}}
+        self._namespaces = {'coco': {Sources.HUGFACE: 'srishti-kaushik/COCO-2017'}}
         self._landmarks = {Pf.NOSE: (0,), Pf.LEYE: (1,), Pf.REYE: (2,), Pf.LEAR: (3,), Pf.REAR: (4,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,)}
         self._categories = {1: Oi.PERSON, 2: Ov.VEHICLE.BICYCLE, 3: Ov.VEHICLE.CAR, 4: Ov.VEHICLE.MOTORCYCLE, 5: Ov.VEHICLE.AIRPLANE, 6: Ov.VEHICLE.BUS, 7: Ov.VEHICLE.TRAIN, 8: Ov.VEHICLE.TRUCK, 9: Ov.VEHICLE.BOAT, 10: Oo.OUTDOOR.TRAFFIC_LIGHT, 11: Oo.OUTDOOR.FIRE_HYDRANT, 12: Oo.OUTDOOR.STREET_SIGN, 13: Oo.OUTDOOR.STOP_SIGN, 14: Oo.OUTDOOR.PARKING_METER, 15: Oo.OUTDOOR.BENCH, 16: Oa.ANIMAL.BIRD, 17: Oa.ANIMAL.CAT, 18: Oa.ANIMAL.DOG, 19: Oa.ANIMAL.HORSE, 20: Oa.ANIMAL.SHEEP, 21: Oa.ANIMAL.COW, 22: Oa.ANIMAL.ELEPHANT, 23: Oa.ANIMAL.BEAR, 24: Oa.ANIMAL.ZEBRA, 25: Oa.ANIMAL.GIRAFFE, 26: Oq.ACCESSORY.HAT, 27: Oq.ACCESSORY.BACKPACK, 28: Oq.ACCESSORY.UMBRELLA, 29: Oq.ACCESSORY.SHOE, 30: Oq.ACCESSORY.EYE_GLASSES, 31: Oq.ACCESSORY.HANDBAG, 32: Oq.ACCESSORY.TIE, 33: Oq.ACCESSORY.SUITCASE, 34: Os.SPORTS.FRISBEE, 35: Os.SPORTS.SKIS, 36: Os.SPORTS.SNOWBOARD, 37: Os.SPORTS.SPORTS_BALL, 38: Os.SPORTS.KITE, 39: Os.SPORTS.BASEBALL_BAT, 40: Os.SPORTS.BASEBALL_GLOVE, 41: Os.SPORTS.SKATEBOARD, 42: Os.SPORTS.SURFBOARD, 43: Os.SPORTS.TENNIS_RACKET, 44: Ok.KITCHEN.BOTTLE, 45: Ok.KITCHEN.PLATE, 46: Ok.KITCHEN.WINE_GLASS, 47: Ok.KITCHEN.CUP, 48: Ok.KITCHEN.FORK, 49: Ok.KITCHEN.KNIFE, 50: Ok.KITCHEN.SPOON, 51: Ok.KITCHEN.BOWL, 52: Of.FOOD.BANANA, 53: Of.FOOD.APPLE, 54: Of.FOOD.SANDWICH, 55: Of.FOOD.ORANGE, 56: Of.FOOD.BROCCOLI, 57: Of.FOOD.CARROT, 58: Of.FOOD.HOT_DOG, 59: Of.FOOD.PIZZA, 60: Of.FOOD.DONUT, 61: Of.FOOD.CAKE, 62: Ow.FURNITURE.CHAIR, 63: Ow.FURNITURE.COUCH, 64: Ow.FURNITURE.POTTED_PLANT, 65: Ow.FURNITURE.BED, 66: Ow.FURNITURE.MIRROR, 67: Ow.FURNITURE.DINING_TABLE, 68: Ow.FURNITURE.WINDOW, 69: Ow.FURNITURE.DESK, 70: Ow.FURNITURE.TOILET, 71: Ow.FURNITURE.DOOR, 72: Oe.ELECTRONIC.TV, 73: Oe.ELECTRONIC.LAPTOP, 74: Oe.ELECTRONIC.MOUSE, 75: Oe.ELECTRONIC.REMOTE, 76: Oe.ELECTRONIC.KEYBOARD, 77: Oe.ELECTRONIC.CELL_PHONE, 78: Oj.APPLIANCE.MICROWAVE, 79: Oj.APPLIANCE.OVEN, 80: Oj.APPLIANCE.TOASTER, 81: Oj.APPLIANCE.SINK, 82: Oj.APPLIANCE.REFRIGERATOR, 83: Oj.APPLIANCE.BLENDER, 84: Oy.INDOOR.BOOK, 85: Oy.INDOOR.CLOCK, 86: Oy.INDOOR.VASE, 87: Oy.INDOOR.SCISSORS, 88: Oy.INDOOR.TEDDY_BEAR, 89: Oy.INDOOR.HAIR_DRIER, 90: Oy.INDOOR.TOOTHBRUSH, 91: Oy.INDOOR.HAIR_BRUSH}
         self._colors = get_palette(len(self._categories))
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], 'images_train2017' if mode is Modes.TRAIN else 'images_val2017', 'train'
+    
     def load_line(self, source, ref, path, line):
         import json
         import itertools
@@ -1151,33 +1154,39 @@ class XView(Database):
         from pcr_framework.categories.vehicles import Vehicle as Ov
         from pcr_framework.categories.buildings import Building as Ob
         super().__init__()
-        self._namespaces = {'xview': {}}
-        # self._categories = {13: Oi.VEHICLE.FIXED_WING_AIRCRAFT.CARGO_PLANE, 15: Oi.VEHICLE.HELICOPTER, 18: Oi.VEHICLE.PASSENGER_VEHICLE.SMALL_CAR, 19: Oi.VEHICLE.PASSENGER_VEHICLE.BUS, 20: Oi.VEHICLE.TRUCK, 41: Oi.VEHICLE.MARITIME_VESSEL.MOTORBOAT, 47: Oi.VEHICLE.MARITIME_VESSEL.FISHING_VESSEL, 60: Oi.VEHICLE.ENGINEERING_VEHICLE.DUMP_TRUCK, 64: Oi.VEHICLE.ENGINEERING_VEHICLE.EXCAVATOR, 71: Oi.BUILDING, 86: Oi.STORAGE_TANK, 89: Oi.SHIPPING_CONTAINER}
+        self._namespaces = {'xview': {Sources.HUGFACE: 'HichTala/xview'}}
         self._categories = {11: Ov.VEHICLE.FIXED_WING_AIRCRAFT, 12: Ov.VEHICLE.FIXED_WING_AIRCRAFT.SMALL_AIRCRAFT, 13: Ov.VEHICLE.FIXED_WING_AIRCRAFT.CARGO_PLANE, 15: Ov.VEHICLE.HELICOPTER, 17: Ov.VEHICLE.PASSENGER_VEHICLE, 18: Ov.VEHICLE.PASSENGER_VEHICLE.SMALL_CAR, 19: Ov.VEHICLE.PASSENGER_VEHICLE.BUS, 20: Ov.VEHICLE.TRUCK.PICKUP_TRUCK, 21: Ov.VEHICLE.TRUCK.UTILITY_TRUCK, 23: Ov.VEHICLE.TRUCK, 24: Ov.VEHICLE.TRUCK.CARGO_TRUCK, 25: Ov.VEHICLE.TRUCK.TRUCK_BOX, 26: Ov.VEHICLE.TRUCK.TRUCK_TRACTOR, 27: Ov.VEHICLE.TRUCK.TRAILER, 28: Ov.VEHICLE.TRUCK.TRUCK_FLATBED, 29: Ov.VEHICLE.TRUCK.TRUCK_LIQUID, 32: Ov.VEHICLE.ENGINEERING_VEHICLE.CRANE_TRUCK, 33: Ov.VEHICLE.RAILWAY_VEHICLE, 34: Ov.VEHICLE.RAILWAY_VEHICLE.PASSENGER_CAR, 35: Ov.VEHICLE.RAILWAY_VEHICLE.CARGO_CAR, 36: Ov.VEHICLE.RAILWAY_VEHICLE.FLAT_CAR, 37: Ov.VEHICLE.RAILWAY_VEHICLE.TANK_CAR, 38: Ov.VEHICLE.RAILWAY_VEHICLE.LOCOMOTIVE, 40: Ov.VEHICLE.MARITIME_VESSEL, 41: Ov.VEHICLE.MARITIME_VESSEL.MOTORBOAT, 42: Ov.VEHICLE.MARITIME_VESSEL.SAILBOAT, 44: Ov.VEHICLE.MARITIME_VESSEL.TUGBOAT, 45: Ov.VEHICLE.MARITIME_VESSEL.BARGE, 47: Ov.VEHICLE.MARITIME_VESSEL.FISHING_VESSEL, 49: Ov.VEHICLE.MARITIME_VESSEL.FERRY, 50: Ov.VEHICLE.MARITIME_VESSEL.YATCH, 51: Ov.VEHICLE.MARITIME_VESSEL.CONTAINER_SHIP, 52: Ov.VEHICLE.MARITIME_VESSEL.OIL_TANKER, 53: Ov.VEHICLE.ENGINEERING_VEHICLE, 54: Ov.VEHICLE.ENGINEERING_VEHICLE.TOWER_CRANE, 55: Ov.VEHICLE.ENGINEERING_VEHICLE.CONTAINER_CRANE, 56: Ov.VEHICLE.ENGINEERING_VEHICLE.REACH_STACKER, 57: Ov.VEHICLE.ENGINEERING_VEHICLE.STRADDLE_CARRIER, 59: Ov.VEHICLE.ENGINEERING_VEHICLE.MOBILE_CRANE, 60: Ov.VEHICLE.ENGINEERING_VEHICLE.DUMP_TRUCK, 61: Ov.VEHICLE.ENGINEERING_VEHICLE.HAUL_TRUCK, 62: Ov.VEHICLE.ENGINEERING_VEHICLE.SCRAPER_TRACTOR, 63: Ov.VEHICLE.ENGINEERING_VEHICLE.FRONT_LOADER, 64: Ov.VEHICLE.ENGINEERING_VEHICLE.EXCAVATOR, 65: Ov.VEHICLE.ENGINEERING_VEHICLE.CEMENT_MIXER, 66: Ov.VEHICLE.ENGINEERING_VEHICLE.GROUND_GRADER, 71: Ob.BUILDING.HUT_TENT, 72: Ob.BUILDING.SHED, 73: Oi.BUILDING, 74: Ob.BUILDING.AIRCRAFT_HANGAR, 76: Ob.BUILDING.DAMAGED_BUILDING, 77: Ob.BUILDING.FACILITY, 79: Oi.CONSTRUCTION_SITE, 83: Ov.VEHICLE.VEHICLE_LOT, 84: Oi.HELIPAD, 86: Oi.STORAGE_TANK, 89: Oi.SHIPPING_CONTAINER_LOT, 91: Oi.SHIPPING_CONTAINER, 93: Oi.PYLON, 94: Oi.TOWER_STRUCTURE}
         self._colors = get_palette(len(self._categories))
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
+
     def load_line(self, source, ref, path, line):
+        import uuid
         seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+        else:
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            objects = line['objects']
         image = AerialImage(filename)
-        num_predictions = int(parts[1])
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         image.gsd = 0.3
+        num_predictions = int(parts[1]) if source is Sources.TXT else len(objects['bbox'])
         for idx in range(0, num_predictions):
             obj = GenericObject()
-            obj.id = int(parts[(3*idx)+2])
-            pts = parts[(3*idx)+3].split(',')
+            obj.id = int(parts[(3*idx)+2]) if source is Sources.TXT else int(objects['bbox_id'][idx])
+            pts = parts[(3*idx)+3].split(',') if source is Sources.TXT else objects['bbox'][idx]
             obj.bb = (int(pts[0]), int(pts[1]), int(pts[2]), int(pts[3]))
-            cat = int(parts[(3*idx)+4])
-            if cat not in self._categories.keys():
-                continue
+            cat = int(parts[(3*idx)+4]) if source is Sources.TXT else int(objects['category'][idx])
             obj.add_category(GenericCategory(self._categories[cat]))
-            # if self._categories[cat] is not Ov.VEHICLE.PASSENGER_VEHICLE.SMALL_CAR:
-            #     continue
             image.add_object(obj)
         if len(image.objects) > 0:
             seq.add_image(image)
