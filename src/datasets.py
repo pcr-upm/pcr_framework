@@ -1154,38 +1154,29 @@ class XView(Database):
         from pcr_framework.categories.vehicles import Vehicle as Ov
         from pcr_framework.categories.buildings import Building as Ob
         super().__init__()
-        self._namespaces = {'xview': {Sources.HUGFACE: 'HichTala/xview'}}
+        self._namespaces = {'xview': {}}
         self._categories = {11: Ov.VEHICLE.FIXED_WING_AIRCRAFT, 12: Ov.VEHICLE.FIXED_WING_AIRCRAFT.SMALL_AIRCRAFT, 13: Ov.VEHICLE.FIXED_WING_AIRCRAFT.CARGO_PLANE, 15: Ov.VEHICLE.HELICOPTER, 17: Ov.VEHICLE.PASSENGER_VEHICLE, 18: Ov.VEHICLE.PASSENGER_VEHICLE.SMALL_CAR, 19: Ov.VEHICLE.PASSENGER_VEHICLE.BUS, 20: Ov.VEHICLE.TRUCK.PICKUP_TRUCK, 21: Ov.VEHICLE.TRUCK.UTILITY_TRUCK, 23: Ov.VEHICLE.TRUCK, 24: Ov.VEHICLE.TRUCK.CARGO_TRUCK, 25: Ov.VEHICLE.TRUCK.TRUCK_BOX, 26: Ov.VEHICLE.TRUCK.TRUCK_TRACTOR, 27: Ov.VEHICLE.TRUCK.TRAILER, 28: Ov.VEHICLE.TRUCK.TRUCK_FLATBED, 29: Ov.VEHICLE.TRUCK.TRUCK_LIQUID, 32: Ov.VEHICLE.ENGINEERING_VEHICLE.CRANE_TRUCK, 33: Ov.VEHICLE.RAILWAY_VEHICLE, 34: Ov.VEHICLE.RAILWAY_VEHICLE.PASSENGER_CAR, 35: Ov.VEHICLE.RAILWAY_VEHICLE.CARGO_CAR, 36: Ov.VEHICLE.RAILWAY_VEHICLE.FLAT_CAR, 37: Ov.VEHICLE.RAILWAY_VEHICLE.TANK_CAR, 38: Ov.VEHICLE.RAILWAY_VEHICLE.LOCOMOTIVE, 40: Ov.VEHICLE.MARITIME_VESSEL, 41: Ov.VEHICLE.MARITIME_VESSEL.MOTORBOAT, 42: Ov.VEHICLE.MARITIME_VESSEL.SAILBOAT, 44: Ov.VEHICLE.MARITIME_VESSEL.TUGBOAT, 45: Ov.VEHICLE.MARITIME_VESSEL.BARGE, 47: Ov.VEHICLE.MARITIME_VESSEL.FISHING_VESSEL, 49: Ov.VEHICLE.MARITIME_VESSEL.FERRY, 50: Ov.VEHICLE.MARITIME_VESSEL.YATCH, 51: Ov.VEHICLE.MARITIME_VESSEL.CONTAINER_SHIP, 52: Ov.VEHICLE.MARITIME_VESSEL.OIL_TANKER, 53: Ov.VEHICLE.ENGINEERING_VEHICLE, 54: Ov.VEHICLE.ENGINEERING_VEHICLE.TOWER_CRANE, 55: Ov.VEHICLE.ENGINEERING_VEHICLE.CONTAINER_CRANE, 56: Ov.VEHICLE.ENGINEERING_VEHICLE.REACH_STACKER, 57: Ov.VEHICLE.ENGINEERING_VEHICLE.STRADDLE_CARRIER, 59: Ov.VEHICLE.ENGINEERING_VEHICLE.MOBILE_CRANE, 60: Ov.VEHICLE.ENGINEERING_VEHICLE.DUMP_TRUCK, 61: Ov.VEHICLE.ENGINEERING_VEHICLE.HAUL_TRUCK, 62: Ov.VEHICLE.ENGINEERING_VEHICLE.SCRAPER_TRACTOR, 63: Ov.VEHICLE.ENGINEERING_VEHICLE.FRONT_LOADER, 64: Ov.VEHICLE.ENGINEERING_VEHICLE.EXCAVATOR, 65: Ov.VEHICLE.ENGINEERING_VEHICLE.CEMENT_MIXER, 66: Ov.VEHICLE.ENGINEERING_VEHICLE.GROUND_GRADER, 71: Ob.BUILDING.HUT_TENT, 72: Ob.BUILDING.SHED, 73: Oi.BUILDING, 74: Ob.BUILDING.AIRCRAFT_HANGAR, 76: Ob.BUILDING.DAMAGED_BUILDING, 77: Ob.BUILDING.FACILITY, 79: Oi.CONSTRUCTION_SITE, 83: Ov.VEHICLE.VEHICLE_LOT, 84: Oi.HELIPAD, 86: Oi.STORAGE_TANK, 89: Oi.SHIPPING_CONTAINER_LOT, 91: Oi.SHIPPING_CONTAINER, 93: Oi.PYLON, 94: Oi.TOWER_STRUCTURE}
         self._colors = get_palette(len(self._categories))
 
-    def get_namespace(self, mode, source, ref):
-        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
-
     def load_line(self, source, ref, path, line):
-        import uuid
         seq = GenericVideo()
-        if source is Sources.TXT:
-            parts = line.strip().split(';')
-            if parts[0] == '#':
-                return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            objects = line['objects']
+        parts = line.strip().split(';')
+        if parts[0] == '#':
+            return seq
+        filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         image.gsd = 0.3
-        num_predictions = int(parts[1]) if source is Sources.TXT else len(objects['bbox'])
+        num_predictions = int(parts[1])
         for idx in range(0, num_predictions):
             obj = GenericObject()
-            obj.id = int(parts[(3*idx)+2]) if source is Sources.TXT else int(objects['bbox_id'][idx])
-            pts = parts[(3*idx)+3].split(',') if source is Sources.TXT else objects['bbox'][idx]
+            obj.id = int(parts[(3*idx)+2])
+            pts = parts[(3*idx)+3].split(',')
             obj.bb = (int(pts[0]), int(pts[1]), int(pts[2]), int(pts[3]))
-            cat = int(parts[(3*idx)+4]) if source is Sources.TXT else int(objects['category'][idx])
+            cat = int(parts[(3*idx)+4])
+            if cat not in self._categories.keys():
+                continue
             obj.add_category(GenericCategory(self._categories[cat]))
             image.add_object(obj)
         if len(image.objects) > 0:
@@ -1487,43 +1478,58 @@ class SpaceNet(Database):
 class Cityscapes(Database):
     def __init__(self):
         super().__init__()
-        self._namespaces = {'cityscapes': {}}
+        self._namespaces = {'cityscapes': {Sources.HUGFACE: 'Chris1/cityscapes'}}
         self._categories = {num: Name(str(num)) for num in range(19)}
         self._colors = [(128, 64, 128), (244, 35, 232), (70, 70, 70), (102, 102, 156), (190, 153, 153), (153, 153, 153), (250, 170, 30), (220, 220, 0), (107, 142, 35), (152, 251, 152), (70, 130, 180), (220, 20, 60), (255, 0, 0), (0, 0, 142), (0, 0, 70), (0, 60, 100), (0, 80, 100), (0, 0, 230), (119, 11, 32)]
 
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
+
     def load_line(self, source, ref, path, line):
+        import uuid
         from .utils import load_geoimage, mask2contours
-        label_mapping = {0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: 0, 8: 1, 9: -1, 10: -1, 11: 2, 12: 3, 13: 4, 14: -1, 15: -1, 16: -1, 17: 5, 18: -1, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: -1, 30: -1, 31: 16, 32: 17, 33: 18}
         seq = GenericVideo()
-        parts = line.strip().split('\t')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
+        if source is Sources.TXT:
+            parts = line.strip().split('\t')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+        else:
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        if len(parts) > 1:
-            aux_filepath = parts[1]
-            aux_image = GenericImage(path + aux_filepath)
-            img, _ = load_geoimage(aux_image.filename)
-            temp = img.copy()
-            for key, value in label_mapping.items():
-                img[temp == key] = value
-            categories = list(np.unique(img))
-            categories.remove(255)
-            contours, labels = [], []
-            for category in categories:
-                mask = np.where((img == category), 255, 0).astype(np.uint8)
-                for contour in mask2contours(mask):
-                    contours.append(contour)
-                    labels.append(str(category))
-            for index in range(len(contours)):
-                obj = GenericObject()
-                bbox = cv2.boundingRect(contours[index])
-                obj.bb = (bbox[0], bbox[1], bbox[2]+bbox[0], bbox[3]+bbox[1])
-                obj.multipolygon = [contours[index]]
-                obj.add_category(GenericCategory(Name(labels[index])))
-                image.add_object(obj)
+        if source is Sources.TXT:
+            if len(parts) == 1:
+                return seq
+            sem_image = GenericImage(os.path.join(path, parts[1]))
+        else:
+            if 'semantic_segmentation' not in line:
+                return seq
+            sem_image = GenericImage(os.path.join(line['semantic_segmentation'], parts[1]))
+        img = Image.open(sem_image.filename)
+        temp = img.copy()
+        label_mapping = {0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: 0, 8: 1, 9: -1, 10: -1, 11: 2, 12: 3, 13: 4, 14: -1, 15: -1, 16: -1, 17: 5, 18: -1, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: -1, 30: -1, 31: 16, 32: 17, 33: 18}
+        for key, value in label_mapping.items():
+            img[temp == key] = value
+        categories = list(np.unique(img))
+        categories.remove(255)
+        contours, labels = [], []
+        for category in categories:
+            mask = np.where((img == category), 255, 0).astype(np.uint8)
+            for contour in mask2contours(mask):
+                contours.append(contour)
+                labels.append(str(category))
+        for index in range(len(contours)):
+            obj = GenericObject()
+            bbox = cv2.boundingRect(contours[index])
+            obj.bb = (bbox[0], bbox[1], bbox[2]+bbox[0], bbox[3]+bbox[1])
+            obj.multipolygon = [contours[index]]
+            obj.add_category(GenericCategory(Name(labels[index])))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
