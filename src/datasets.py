@@ -810,45 +810,6 @@ class Panoptic(Database):
         return seq
 
 
-class WIDER(Database):
-    def __init__(self):
-        super().__init__()
-        self._namespaces = {'wider': {Sources.HUGFACE: 'CUHK-CSE/wider_face', Sources.TENSORFLOW: 'wider_face'}}
-        self._categories = {0: Oi.FACE}
-        self._colors = [(0, 255, 0)]
-
-    def get_namespace(self, mode, source, ref):
-        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
-    
-    def load_line(self, source, ref, path, line):
-        import uuid
-        import json
-        seq = GenericVideo()
-        if source is Sources.TXT:
-            parts = line.strip().split(';')
-            if parts[0] == '#':
-                return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            faces = line['faces']
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        num_faces = int(parts[2]) if source is Sources.TXT else len(faces['bbox'])
-        for idx in range(0, num_faces):
-            obj = PersonObject()
-            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces['bbox'][idx], dtype=float) 
-            obj.bb = (int(round(float(bbox[0]))), int(round(float(bbox[1]))), int(round(float(bbox[0]+bbox[2]))), int(round(float(bbox[1]+bbox[3]))))
-            obj.add_category(GenericCategory(self._categories[0]))
-            image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
 class RAF(Database):
     def __init__(self):
         from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
@@ -960,6 +921,48 @@ class MultiPie(Database):
         seq.add_image(image)
         return seq
 
+# ################################################################
+#                       DETECTION DATASETS
+# ################################################################
+
+class WIDER(Database):
+    def __init__(self):
+        super().__init__()
+        self._namespaces = {'wider': {Sources.HUGFACE: 'CUHK-CSE/wider_face', Sources.TENSORFLOW: 'wider_face'}}
+        self._categories = {0: Oi.FACE}
+        self._colors = [(0, 255, 0)]
+
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
+    
+    def load_line(self, source, ref, path, line):
+        import uuid
+        import json
+        seq = GenericVideo()
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+        else:
+            filename = os.path.join(path, f'{uuid.uuid4()}.png')
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            faces = line['faces']
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        num_faces = int(parts[2]) if source is Sources.TXT else len(faces['bbox'])
+        for idx in range(0, num_faces):
+            obj = PersonObject()
+            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces['bbox'][idx], dtype=float) 
+            obj.bb = (int(round(float(bbox[0]))), int(round(float(bbox[1]))), int(round(float(bbox[0]+bbox[2]))), int(round(float(bbox[1]+bbox[3]))))
+            obj.add_category(GenericCategory(self._categories[0]))
+            image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
 
 class ArckPadel(Database):
     def __init__(self):
@@ -1027,51 +1030,6 @@ class XView(Database):
             obj.add_category(GenericCategory(self._categories[cat]))
             image.add_object(obj)
         if len(image.objects) > 0:
-            seq.add_image(image)
-        return seq
-
-
-class XView2(Database):
-    def __init__(self):
-        from pcr_framework.categories.buildings import Building as Ob
-        super().__init__()
-        self._namespaces = {'xview2': {}}
-        self._categories = {'building': Oi.BUILDING, 'un-classified': Ob.BUILDING.UNCLASSIFIED, 'no-damage': Ob.BUILDING.NO_DAMAGE, 'minor-damage': Ob.BUILDING.MINOR_DAMAGE, 'major-damage': Ob.BUILDING.MAJOR_DAMAGE, 'destroyed': Ob.BUILDING.DESTROYED}
-        self._colors = get_palette(len(self._categories))
-
-    def load_line(self, source, ref, path, line):
-        import json
-        from shapely import wkt
-        from .utils import geometry2numpy
-        seq = GenericVideo()
-        for time in ['pre_', 'post_']:
-            filepath = line.strip()
-            pos = filepath.find('pre_')
-            image = AerialImage(path + filepath[:pos] + time + filepath[pos+4:])
-            pos = filepath.find('/') + 1
-            mid = filepath[:pos]
-            end = filepath[pos:]
-            json_file = path + mid + 'labels' + end[6:-16] + time + 'disaster.json'
-            with open(json_file) as ifs:
-                json_data = json.load(ifs)
-            ifs.close()
-            image.tile = np.array([0, 0, json_data['metadata']['width'], json_data['metadata']['height']])
-            image.gsd = json_data['metadata']['gsd']
-            image.nadir_angle = json_data['metadata']['off_nadir_angle']
-            image.timestamp = json_data['metadata']['capture_date']
-            for feat in json_data['features']['xy']:
-                geom = wkt.loads(feat['wkt'])
-                if geom.is_empty:
-                    continue
-                obj = GenericObject()
-                obj.id = feat['properties']['uid']
-                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
-                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
-                if json_file.find('post_disaster') > -1:
-                    obj.add_category(GenericCategory(self._categories[feat['properties']['subtype']]))
-                else:
-                    obj.add_category(GenericCategory(self._categories[feat['properties']['feature_type']]))
-                image.add_object(obj)
             seq.add_image(image)
         return seq
 
@@ -1289,33 +1247,36 @@ class NWPU(Database):
         return seq
 
 
-class SpaceNet(Database):
+class WorldView3(Database):
     def __init__(self):
+        from pcr_framework.categories.vehicles import Vehicle as Ov
         super().__init__()
-        self._namespaces = {'spacenet': {}}
-        self._categories = {0: Oi.BUILDING}
+        self._namespaces = {'maxar': {}}
+        self._categories = {0: Ov.VEHICLE.CAR}
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        from shapely import wkt
-        from .utils import geometry2numpy
+        import rasterio
         seq = GenericVideo()
         parts = line.strip().split(';')
         if parts[0] == '#':
             return seq
         filename = os.path.join(path, parts[0])
         image = AerialImage(filename)
-        width, height = Image.open(image.filename).size
+        src_raster = rasterio.open(image.filename, 'r')
+        width = src_raster.width
+        height = src_raster.height
         image.tile = np.array([0, 0, width, height])
+        image.gsd = 0.3
         if len(parts) > 1:
-            for i in range(1, len(parts), 2):
-                geom = wkt.loads(parts[i+1])
-                if geom.is_empty:
-                    continue
+            import xml.etree.ElementTree as ET
+            filepath = parts[1]
+            tree = ET.parse(path + filepath)
+            root = tree.getroot()
+            for obj in root.findall('object'):
+                bbox = obj.find('bndbox')
                 obj = GenericObject()
-                obj.id = str(parts[i])
-                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
-                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+                obj.bb = (int(bbox.find('xmin').text), int(bbox.find('ymin').text), int(bbox.find('xmax').text), int(bbox.find('ymax').text))
                 obj.add_category(GenericCategory(self._categories[0]))
                 image.add_object(obj)
         seq.add_image(image)
@@ -1489,6 +1450,40 @@ class LIP(Database):
         return seq
 
 
+class SpaceNet(Database):
+    def __init__(self):
+        super().__init__()
+        self._namespaces = {'spacenet': {}}
+        self._categories = {0: Oi.BUILDING}
+        self._colors = [(0, 255, 0)]
+
+    def load_line(self, source, ref, path, line):
+        from shapely import wkt
+        from .utils import geometry2numpy
+        seq = GenericVideo()
+        parts = line.strip().split(';')
+        if parts[0] == '#':
+            return seq
+        filename = os.path.join(path, parts[0])
+        image = AerialImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        if len(parts) == 1:
+            return seq
+        for i in range(1, len(parts), 2):
+            geom = wkt.loads(parts[i+1])
+            if geom.is_empty:
+                continue
+            obj = GenericObject()
+            obj.id = str(parts[i])
+            obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
+            obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+            obj.add_category(GenericCategory(self._categories[0]))
+            image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
 class SegESolarScene(Database):
     def __init__(self):
         super().__init__()
@@ -1577,16 +1572,17 @@ class RecGeoAIPanels(Database):
         image = AerialImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        if len(parts) > 1:
-            for i in range(1, len(parts), 2):
-                geom = wkt.loads(parts[i])
-                if geom.is_empty:
-                    continue
-                obj = GenericObject()
-                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
-                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
-                obj.add_category(GenericCategory(self._categories[parts[i+1]]))
-                image.add_object(obj)
+        if len(parts) == 1:
+            return seq
+        for i in range(1, len(parts), 2):
+            geom = wkt.loads(parts[i])
+            if geom.is_empty:
+                continue
+            obj = GenericObject()
+            obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
+            obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+            obj.add_category(GenericCategory(self._categories[parts[i+1]]))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
@@ -1708,37 +1704,46 @@ class StanfordCars(Database):
         return seq
 
 
-class WorldView3(Database):
+class XView2(Database):
     def __init__(self):
-        from pcr_framework.categories.vehicles import Vehicle as Ov
+        from pcr_framework.categories.buildings import Building as Ob
         super().__init__()
-        self._namespaces = {'maxar': {}}
-        self._categories = {0: Ov.VEHICLE.CAR}
-        self._colors = [(0, 255, 0)]
+        self._namespaces = {'xview2': {}}
+        self._categories = {'building': Oi.BUILDING, 'un-classified': Ob.BUILDING.UNCLASSIFIED, 'no-damage': Ob.BUILDING.NO_DAMAGE, 'minor-damage': Ob.BUILDING.MINOR_DAMAGE, 'major-damage': Ob.BUILDING.MAJOR_DAMAGE, 'destroyed': Ob.BUILDING.DESTROYED}
+        self._colors = get_palette(len(self._categories))
 
     def load_line(self, source, ref, path, line):
-        import rasterio
+        import json
+        from shapely import wkt
+        from .utils import geometry2numpy
         seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
-        image = AerialImage(filename)
-        src_raster = rasterio.open(image.filename, 'r')
-        width = src_raster.width
-        height = src_raster.height
-        image.tile = np.array([0, 0, width, height])
-        image.gsd = 0.3
-        if len(parts) > 1:
-            import xml.etree.ElementTree as ET
-            filepath = parts[1]
-            tree = ET.parse(path + filepath)
-            root = tree.getroot()
-            for obj in root.findall('object'):
-                bbox = obj.find('bndbox')
+        for time in ['pre_', 'post_']:
+            filepath = line.strip()
+            pos = filepath.find('pre_')
+            image = AerialImage(path + filepath[:pos] + time + filepath[pos+4:])
+            pos = filepath.find('/') + 1
+            mid = filepath[:pos]
+            end = filepath[pos:]
+            json_file = path + mid + 'labels' + end[6:-16] + time + 'disaster.json'
+            with open(json_file) as ifs:
+                json_data = json.load(ifs)
+            ifs.close()
+            image.tile = np.array([0, 0, json_data['metadata']['width'], json_data['metadata']['height']])
+            image.gsd = json_data['metadata']['gsd']
+            image.nadir_angle = json_data['metadata']['off_nadir_angle']
+            image.timestamp = json_data['metadata']['capture_date']
+            for feat in json_data['features']['xy']:
+                geom = wkt.loads(feat['wkt'])
+                if geom.is_empty:
+                    continue
                 obj = GenericObject()
-                obj.bb = (int(bbox.find('xmin').text), int(bbox.find('ymin').text), int(bbox.find('xmax').text), int(bbox.find('ymax').text))
-                obj.add_category(GenericCategory(self._categories[0]))
+                obj.id = feat['properties']['uid']
+                obj.bb = (int(geom.bounds[0]), int(geom.bounds[1]), int(geom.bounds[2]), int(geom.bounds[3]))
+                obj.multipolygon = [contour for contour in geometry2numpy(geom)]
+                if json_file.find('post_disaster') > -1:
+                    obj.add_category(GenericCategory(self._categories[feat['properties']['subtype']]))
+                else:
+                    obj.add_category(GenericCategory(self._categories[feat['properties']['feature_type']]))
                 image.add_object(obj)
-        seq.add_image(image)
+            seq.add_image(image)
         return seq
