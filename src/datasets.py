@@ -977,8 +977,6 @@ class ArckPadel(Database):
         if parts[0] == '#':
             return seq
         num_images = int(parts[1])
-        if len(parts) == 2:
-            return seq
         for idx in range(0, num_images):
             filename = os.path.join(path, parts[2+idx])
             root, extension = os.path.splitext(filename)
@@ -1268,17 +1266,18 @@ class WorldView3(Database):
         height = src_raster.height
         image.tile = np.array([0, 0, width, height])
         image.gsd = 0.3
-        if len(parts) > 1:
-            import xml.etree.ElementTree as ET
-            filepath = parts[1]
-            tree = ET.parse(path + filepath)
-            root = tree.getroot()
-            for obj in root.findall('object'):
-                bbox = obj.find('bndbox')
-                obj = GenericObject()
-                obj.bb = (int(bbox.find('xmin').text), int(bbox.find('ymin').text), int(bbox.find('xmax').text), int(bbox.find('ymax').text))
-                obj.add_category(GenericCategory(self._categories[0]))
-                image.add_object(obj)
+        if len(parts) == 1:
+            return seq
+        import xml.etree.ElementTree as ET
+        filepath = parts[1]
+        tree = ET.parse(path + filepath)
+        root = tree.getroot()
+        for obj in root.findall('object'):
+            bbox = obj.find('bndbox')
+            obj = GenericObject()
+            obj.bb = (int(bbox.find('xmin').text), int(bbox.find('ymin').text), int(bbox.find('xmax').text), int(bbox.find('ymax').text))
+            obj.add_category(GenericCategory(self._categories[0]))
+            image.add_object(obj)
         seq.add_image(image)
         return seq
 
@@ -1312,36 +1311,44 @@ class COCO(Database):
     def load_line(self, source, ref, path, line):
         import json
         import itertools
-        # from ast import literal_eval
+        from ast import literal_eval
         from datetime import datetime
         from pcr_framework.regression.alignment.landmarks import lps
         seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+            filename = os.path.join(path, parts[0])
+        else:
+            filename = os.path.join(path, line['file_name'])
+            img = np.array(line['image'])
+            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        image.timestamp = datetime.strptime(parts[2], '%Y-%m-%d %H:%M:%S')
-        for idx in range(0, int(parts[3])):
-            bbox = np.array(json.loads(parts[(5*idx)+5]), dtype=float)
-            # contours = literal_eval(parts[(5*idx)+6])
-            landmarks = np.array(json.loads(parts[(5*idx)+8]), dtype=int)
-            obj = GenericObject() if landmarks.size == 0 else PersonObject()
-            obj.id = int(parts[(5*idx)+4])
+        image.timestamp = datetime.strptime(parts[2] if source is Sources.TXT else line['date_captured'], '%Y-%m-%d %H:%M:%S')
+        for idx in range(0, int(parts[3] if source is Sources.TXT else len(line['objects']))):
+            id = int(parts[(5*idx)+4] if source is Sources.TXT else line['objects'][idx]['id'])
+            bbox = np.array(json.loads(parts[(5*idx)+5]) if source is Sources.TXT else line['objects'][idx]['bbox'], dtype=float)
+            contours = literal_eval(parts[(5*idx)+6]) if source is Sources.TXT else line['objects'][idx]['segmentation'].get('polygons', [])
+            if not contours:
+                continue
+            category = int(parts[(5*idx)+7] if source is Sources.TXT else line['objects'][idx]['category_id'])
+            landmarks = np.array(json.loads(parts[(5*idx)+8]) if source is Sources.TXT else line['objects'][idx]['keypoints'], dtype=int)
+            obj = PersonObject() if category == 1 else GenericObject()
+            obj.id = id
             obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
-            # obj.multipolygon = [np.array([[[pt[0], pt[1]]] for pt in list(zip(contour[::2], contour[1::2]))], dtype=float) for contour in contours]
-            obj.add_category(GenericCategory(list(self._categories.values())[int(parts[(5*idx)+7])-1]))
-            # if not isinstance(obj, PersonObject):
-            #     continue
-            # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
-            #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
-            #     vis = int(landmarks[(3*label)+2])
-            #     if vis == 0:  # landmark is not in the image
-            #         continue
-            #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis == 2)), lps[type(lp)])
+            obj.multipolygon = [np.array([[[pt[0], pt[1]]] for pt in list(zip(contour[::2], contour[1::2]))], dtype=float) for contour in contours]
+            obj.add_category(GenericCategory(list(self._categories.values())[category]))
+            for label in list(itertools.chain.from_iterable(self._landmarks.values())):
+                lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
+                pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
+                vis = int(landmarks[(3*label)+2])
+                if vis == 0:  # landmark is not labelled
+                    continue
+                obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis==2)), lps[type(lp)])
             image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1386,13 +1393,12 @@ class Cityscapes(Database):
             img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
             Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
         sem_image = GenericImage(filename)
-        img = np.array(Image.open(sem_image.filename))
+        img = np.array(Image.open(sem_image.filename)).astype(np.int8)
         temp = img.copy()
         label_mapping = {0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1, 7: 0, 8: 1, 9: -1, 10: -1, 11: 2, 12: 3, 13: 4, 14: -1, 15: -1, 16: -1, 17: 5, 18: -1, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12, 26: 13, 27: 14, 28: 15, 29: -1, 30: -1, 31: 16, 32: 17, 33: 18}
         for key, value in label_mapping.items():
             img[temp == key] = value
         categories = list(np.unique(img))
-        categories.remove(255)
         contours, labels = [], []
         for category in categories:
             mask = np.where((img == category), 255, 0).astype(np.uint8)
