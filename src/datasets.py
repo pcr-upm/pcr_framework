@@ -1336,19 +1336,19 @@ class COCO(Database):
             if not contours:
                 continue
             category = int(parts[(5*idx)+7] if source is Sources.TXT else line['objects'][idx]['category_id'])
-            landmarks = np.array(json.loads(parts[(5*idx)+8]) if source is Sources.TXT else line['objects'][idx]['keypoints'], dtype=int)
+            # landmarks = np.array(json.loads(parts[(5*idx)+8]) if source is Sources.TXT else line['objects'][idx]['keypoints'], dtype=int)
             obj = PersonObject() if category == 1 else GenericObject()
             obj.id = id
             obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
-            obj.multipolygon = [np.array([[[pt[0], pt[1]]] for pt in list(zip(contour[::2], contour[1::2]))], dtype=float) for contour in contours]
-            obj.add_category(GenericCategory(list(self._categories.values())[category]))
-            for label in list(itertools.chain.from_iterable(self._landmarks.values())):
-                lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-                pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
-                vis = int(landmarks[(3*label)+2])
-                if vis == 0:  # landmark is not labelled
-                    continue
-                obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis==2)), lps[type(lp)])
+            obj.multipolygon = list([np.round(contour).astype(np.int32).reshape(-1, 1, 2) for contour in contours])
+            [obj.add_category(GenericCategory(list(self._categories.values())[category])) for _ in contours]
+            # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
+            #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
+            #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
+            #     vis = int(landmarks[(3*label)+2])
+            #     if vis == 0:  # landmark is not labelled
+            #         continue
+            #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis==2)), lps[type(lp)])
             image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1399,6 +1399,7 @@ class Cityscapes(Database):
         for key, value in label_mapping.items():
             img[temp == key] = value
         categories = list(np.unique(img))
+        categories.remove(-1)
         contours, labels = [], []
         for category in categories:
             mask = np.where((img == category), 255, 0).astype(np.uint8)
