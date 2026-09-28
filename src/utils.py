@@ -98,10 +98,7 @@ def save_geoimage(filename, img, profile):
 
 
 def clip_objects(objs, roi):
-    boxes = []
-    for satellite_obj in objs:
-        boxes.append(satellite_obj.bb)
-    boxes = np.array(boxes)
+    boxes = np.array([obj.bb for obj in objs])
     center_x = (boxes[:, 0]+boxes[:, 2])*0.5
     center_y = (boxes[:, 1]+boxes[:, 3])*0.5
     cond1 = np.intersect1d(np.where(center_y[:] >= roi[1])[0], np.where(center_x[:] >= roi[0])[0])
@@ -113,15 +110,15 @@ def clip_objects(objs, roi):
 def clip_images(seq, tile_shape, overlap_shape):
     aux = copy.deepcopy(seq)
     seq.clear()
-    for satellite_img in aux.images:
+    for img in aux.images:
         # Sliding window
-        for hh in range(0, satellite_img.tile[3]-satellite_img.tile[1], tile_shape[0]-overlap_shape[0]):
-            for ww in range(0, satellite_img.tile[2]-satellite_img.tile[0], tile_shape[1]-overlap_shape[1]):
-                img_pred = copy.deepcopy(satellite_img)
+        for hh in range(0, img.tile[3]-img.tile[1], tile_shape[0]-overlap_shape[0]):
+            for ww in range(0, img.tile[2]-img.tile[0], tile_shape[1]-overlap_shape[1]):
+                img_pred = copy.deepcopy(img)
                 img_pred.tile = np.array([ww, hh, ww+tile_shape[1], hh+tile_shape[0]])
                 img_pred.objects.clear()
-                for satellite_obj in satellite_img.objects:
-                    obj_pred = copy.deepcopy(satellite_obj)
+                for obj in img.objects:
+                    obj_pred = copy.deepcopy(obj)
                     # We save coordinates referred to the tile position for all objects
                     if obj_pred.bb != (-1, -1, -1, -1):
                         obj_pred.bb = list(np.array(obj_pred.bb) - np.array([ww, hh, ww, hh]))
