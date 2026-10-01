@@ -45,6 +45,15 @@ def get_palette(n):
     return list(zip(*[iter(palette)]*3))
 
 
+def save_image(path, image):
+    import uuid
+    filename = os.path.join(path, f'{uuid.uuid4()}.png')
+    img = np.array(image)
+    img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
+    Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+    return filename
+
+
 class Database(abc.ABC):
     """
     Declare a common interface for the different data sets.
@@ -208,20 +217,15 @@ class Attach(Database):
 
 class Shapes3D(Database):
     def __init__(self):
-        from pcr_framework.categories.characters import Character as Oc
         super().__init__()
         self._namespaces = {'shapes3d': {Sources.HUGFACE: 'eurecom-ds/shapes3d', Sources.TENSORFLOW: 'shapes3d'}}
         self._colors = get_palette(15)
 
     def load_line(self, source, ref, path, line):
-        import uuid
         seq = GenericVideo()
-        filename = os.path.join(path, f'{uuid.uuid4()}.png')
-        img = np.array(line['image'])
-        img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-        Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+        filename = save_image(path, line['image'])
         image = GenericImage(filename)
-        height, width = img.shape[:2]
+        width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = GenericObject()
         obj.bb = (0, 0, width, height)
@@ -231,37 +235,6 @@ class Shapes3D(Database):
         obj.add_category(GenericCategory(int(line['label_scale'])))
         obj.add_category(GenericCategory(int(line['label_shape'])))
         obj.add_category(GenericCategory(int(line['label_wall_hue'])))
-        image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
-class Fill50K(Database):
-    def __init__(self):
-        super().__init__()
-        self._namespaces = {'fill50k': {}}
-        self._categories = {0: Oi.BACKGROUND}
-        self._colors = [(0, 255, 0)]
-
-    def load_line(self, source, ref, path, line):
-        seq = GenericVideo()
-        parts = line.strip().split(';')
-        if parts[0] == '#':
-            return seq
-        filename = os.path.join(path, parts[0])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        obj = DiffusionObject()
-        obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(Oi.BACKGROUND))
-        obj.control = path + parts[1]
-        obj.prompt = parts[2]
-        dirname = path + 'prompt/'
-        Path(dirname).mkdir(parents=True, exist_ok=True)
-        obj.prompt = dirname + os.path.splitext(os.path.basename(image.filename))[0] + '.txt'
-        with open(obj.prompt, 'w', encoding='utf-8') as ofs: 
-            ofs.write(parts[2])
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -682,7 +655,6 @@ class AFLW2000(Database):
         self._colors = [(0, 255, 0)]
 
     def load_line(self, source, ref, path, line):
-        import uuid
         import itertools
         from scipy.spatial.transform import Rotation
         from pcr_framework.regression.alignment.landmarks import lps, PersonLandmarkPart as Pl
@@ -691,12 +663,7 @@ class AFLW2000(Database):
             parts = line.strip().split(';')
             if parts[0] == '#':
                 return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
@@ -936,27 +903,20 @@ class WIDER(Database):
         return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
     
     def load_line(self, source, ref, path, line):
-        import uuid
         import json
         seq = GenericVideo()
         if source is Sources.TXT:
             parts = line.strip().split(';')
             if parts[0] == '#':
                 return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            faces = line['faces']
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        num_faces = int(parts[2]) if source is Sources.TXT else len(faces['bbox'])
+        num_faces = int(parts[2]) if source is Sources.TXT else len(line['faces']['bbox'])
         for idx in range(0, num_faces):
             obj = PersonObject()
-            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else faces['bbox'][idx], dtype=float) 
+            bbox = np.array(json.loads(parts[(3+idx)]) if source is Sources.TXT else line['faces']['bbox'][idx], dtype=float) 
             obj.bb = (int(round(float(bbox[0]))), int(round(float(bbox[1]))), int(round(float(bbox[0]+bbox[2]))), int(round(float(bbox[1]+bbox[3]))))
             obj.add_category(GenericCategory(self._categories[0]))
             image.add_object(obj)
@@ -1319,12 +1279,7 @@ class COCO(Database):
             parts = line.strip().split(';')
             if parts[0] == '#':
                 return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, line['file_name'])
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['file_name'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
@@ -1365,19 +1320,13 @@ class Cityscapes(Database):
         return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'validation'
 
     def load_line(self, source, ref, path, line):
-        import uuid
         from .utils import mask2contours
         seq = GenericVideo()
         if source is Sources.TXT:
             parts = line.strip().split('\t')
             if parts[0] == '#':
                 return seq
-            filename = os.path.join(path, parts[0])
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
@@ -1388,10 +1337,7 @@ class Cityscapes(Database):
         else:
             if 'semantic_segmentation' not in line:
                 return seq
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['semantic_segmentation'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+            filename = save_image(path, cv2.line['semantic_segmentation'])
         sem_image = GenericImage(filename)
         img = np.array(Image.open(sem_image.filename)).astype(np.int8)
         temp = img.copy()
@@ -1607,20 +1553,13 @@ class Mnist(Database):
         return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
     
     def load_line(self, source, ref, path, line):
-        import uuid
         seq = GenericVideo()
         if source is Sources.TXT:
             parts = line.strip().split(';')
             if parts[0] == '#':
                 return seq
-            filename = os.path.join(path, parts[0])
-            label = parts[1]
-        else:
-            filename = os.path.join(path, f'{uuid.uuid4()}.png')
-            img = np.array(line['image'])
-            img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
-            Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
-            label = int(line['label'])
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
+        label = int(parts[1]) if source is Sources.TXT else int(line['label'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
@@ -1644,18 +1583,14 @@ class FER2013(Database):
         return self._namespaces[ref][source], None, 'train' if mode is Modes.TRAIN else 'test'
     
     def load_line(self, source, ref, path, line):
-        import uuid
         seq = GenericVideo()
-        filename = os.path.join(path, f'{uuid.uuid4()}.png')
-        img = line['image']
-        img.save(filename)
+        filename = save_image(path, line['image'])
         image = GenericImage(filename)
-        height, width = img.size
-        label = line['label']
+        width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
         obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[int(label)]))
+        obj.add_category(GenericCategory(self._categories[int(line['label'])]))
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1753,4 +1688,40 @@ class XView2(Database):
                     obj.add_category(GenericCategory(self._categories[feat['properties']['feature_type']]))
                 image.add_object(obj)
             seq.add_image(image)
+        return seq
+
+# ################################################################
+#                      GENERATION DATASETS
+# ################################################################
+
+class Fill50K(Database):
+    def __init__(self):
+        super().__init__()
+        self._namespaces = {'fill50k': {Sources.HUGFACE: 'fusing/fill50k'}}
+        self._categories = {0: Oi.BACKGROUND}
+        self._colors = [(0, 255, 0)]
+
+    def load_line(self, source, ref, path, line):
+        seq = GenericVideo()
+        if source is Sources.TXT:
+            parts = line.strip().split(';')
+            if parts[0] == '#':
+                return seq
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
+        control = os.path.join(path, parts[1]) if source is Sources.TXT else save_image(path, line['conditioning_image'])
+        prompt = parts[2] if source is Sources.TXT else line['text']
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        obj = DiffusionObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(Oi.BACKGROUND))
+        obj.control = control
+        dirname = os.path.join(path, 'prompt/')
+        Path(dirname).mkdir(parents=True, exist_ok=True)
+        obj.prompt = dirname + os.path.splitext(os.path.basename(image.filename))[0] + '.txt'
+        with open(obj.prompt, 'w', encoding='utf-8') as ofs: 
+            ofs.write(prompt)
+        image.add_object(obj)
+        seq.add_image(image)
         return seq
