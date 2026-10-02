@@ -1279,7 +1279,7 @@ class COCO(Database):
             parts = line.strip().split(';')
             if parts[0] == '#':
                 return seq
-        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['file_name'])
+        filename = os.path.join(path, parts[0]) if source is Sources.TXT else save_image(path, line['image'])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
@@ -1295,8 +1295,9 @@ class COCO(Database):
             obj = PersonObject() if category == 1 else GenericObject()
             obj.id = id
             obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
-            obj.multipolygon = list([np.array(contour, dtype=float).round().astype(np.int32).reshape(-1, 1, 2) for contour in contours])
-            [obj.add_category(GenericCategory(list(self._categories.values())[category])) for _ in contours]
+            obj.add_category(GenericCategory(list(self._categories.values())[category]))
+            # obj.multipolygon = list([np.array(contour, dtype=float).round().astype(np.int32).reshape(-1, 1, 2) for contour in contours])
+            # [obj.add_category(GenericCategory(list(self._categories.values())[category])) for _ in contours]
             # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
             #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
             #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
