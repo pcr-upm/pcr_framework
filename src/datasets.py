@@ -45,12 +45,23 @@ def get_palette(n):
     return list(zip(*[iter(palette)]*3))
 
 
-def save_image(path, image):
+def save_image(path, image, ext='.png'):
     import uuid
-    filename = os.path.join(path, f'{uuid.uuid4()}.png')
+    filename = os.path.join(path, f'{uuid.uuid4()}{ext}')
     img = np.array(image)
     img = np.repeat(img[..., np.newaxis], 3, axis=2) if img.ndim == 2 else (np.repeat(img, 3, axis=2) if img.shape[2] == 1 else img)
     Image.fromarray(img.astype(np.uint8), mode='RGB').save(filename)
+    return filename
+
+
+def save_video(path, frames, height, width, fps=30.0, ext='.mp4'):
+    import uuid
+    filename = os.path.join(path, f'{uuid.uuid4()}{ext}')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v' if ext == '.mp4' else 'DIVX')
+    video = cv2.VideoWriter(filename, fourcc, fps, (width, height))
+    for frame in frames:
+        video.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+    video.release()
     return filename
 
 
@@ -1389,11 +1400,11 @@ class Thumos(Database):
     def load_line(self, source, ref, path, line, load_images=True):
         import re
         import tempfile
-        filename = os.path.join(path, line[0], '.mp4') if source is Sources.TXT else save_video(path, line['video'])
+        filename = os.path.join(path, line[0], '.mp4') if source is Sources.TXT else save_video(path, np.frombuffer(line['binary_frames'], dtype=np.uint8).reshape((len(line['binary_frames']) // (line['height'] * line['width'] * line['channels']), line['height'], line['width'], line['channels'])), line['height'], line['width'])
         seq = GenericVideo(filename)
-        info = line[1] if source is Sources.TXT else line['info']
-        seq.frames = info.get('frame', 0)
-        seq.duration = info.get('duration', 0.0)
+        seq.frames = line[1].get('frame', 0) if source is Sources.TXT else int(line['num_frames'])
+        seq.duration = line[1].get('duration', 0.0) if source is Sources.TXT else 0.0
+        anns = line[1].get('annotations', []) if source is Sources.TXT else [{'label': line['category_name'], 'segment': [float(line['start_time']), float(line['end_time'])]}]
         if load_images:
             cap = cv2.VideoCapture(seq.filename)
             if not cap.isOpened():
@@ -1413,7 +1424,7 @@ class Thumos(Database):
         # Annotation files spell the class names without separators, e.g. 'CleanAndJerk'
         normalize = lambda text: re.sub(r'[^a-z0-9]', '', str(text).lower())
         names = {normalize(cat.name): cat for cat in self._categories.values()}
-        for ann in info.get('annotations', []):
+        for ann in anns:
             label = names.get(normalize(ann['label']), Name(str(ann['label'])))
             seq.add_action(TemporalCategory(segment=tuple(ann['segment']), label=label))
         return seq
