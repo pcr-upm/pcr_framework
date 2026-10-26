@@ -95,27 +95,6 @@ class Database(abc.ABC):
         return self._colors
 
 
-class Shapes3D(Database):
-    def __init__(self):
-        super().__init__()
-        self._namespaces = {'shapes3d': {Sources.HUGFACE: 'eurecom-ds/shapes3d', Sources.TENSORFLOW: 'shapes3d'}}
-        self._colors = get_palette(15)
-
-    def load_line(self, source, ref, path, line):
-        seq = GenericVideo()
-        filename = save_image(path, line['image'])
-        image = GenericImage(filename)
-        width, height = Image.open(image.filename).size
-        image.tile = np.array([0, 0, width, height])
-        obj = PersonObject()
-        obj.bb = (0, 0, width, height)
-        names = ['label_floor_hue', 'label_object_hue', 'label_orientation', 'label_scale', 'label_shape', 'label_wall_hue']
-        [obj.add_attribute(GenericCategory(str(int(line[name])))) for name in names]
-        image.add_object(obj)
-        seq.add_image(image)
-        return seq
-
-
 class HPGEN(Database):
     def __init__(self):
         super().__init__()
@@ -280,8 +259,6 @@ class AFLW(Database):
         super().__init__()
         self._namespaces = {'aflw': {}}
         self._landmarks = {Pf.LEYEBROW: (1, 2, 3), Pf.REYEBROW: (4, 5, 6), Pf.LEYE: (7, 101, 8), Pf.REYE: (11, 102, 12), Pf.NOSE: (16, 17, 18), Pf.TMOUTH: (20, 103, 21), Pf.LEAR: (15,), Pf.REAR: (19,), Pf.CHIN: (24,)}
-        self._gender = {'m': 'Male', 'f': 'Female'}
-        self._glasses = {True: 'Glasses', False: 'No glasses'}
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
 
@@ -299,9 +276,9 @@ class AFLW(Database):
         obj = DiffusionObject()
         obj.bb = (int(parts[1]), int(parts[2]), int(parts[1])+int(parts[3]), int(parts[2])+int(parts[4]))
         obj.add_category(GenericCategory(Oi.FACE))
+        obj.add_category(GenericCategory('Male' if parts[8] == 'm' else 'Female'))
+        obj.add_category(GenericCategory('Glasses' if bool(parts[9]) else 'No glasses'))
         obj.headpose = Rotation.from_euler('YXZ', [float(parts[5]), float(parts[6]), float(parts[7])], degrees=True).as_matrix()
-        obj.add_attribute(GenericCategory(self._gender[parts[8]]))
-        obj.add_attribute(GenericCategory(self._glasses[bool(parts[9])]))
         num_landmarks = int(parts[10])
         indices = [1, 2, 3, 4, 5, 6, 7, 101, 8, 11, 102, 12, 15, 16, 17, 18, 19, 20, 103, 21, 24]
         for idx in range(0, num_landmarks):
@@ -459,13 +436,6 @@ class DAD(Database):
         super().__init__()
         self._namespaces = {'dad': {}}
         self._landmarks = {Pf.LEYEBROW: (1983, 2189, 3708, 336, 335, 3153, 3705, 2178, 3684, 3741, 3148, 3696, 2585, 2565, 2567, 3764), Pf.REYEBROW: (570, 694, 3865, 17, 16, 2134, 3863, 673, 3851, 3880, 2121, 3859, 1448, 1428, 1430, 3893), Pf.LEYE: (2441, 2446, 2382, 2381, 2383, 2496, 3690, 2493, 2491, 2465, 3619, 3632, 2505, 2273, 2276, 2355, 2295, 2359, 2267, 2271, 2403, 2437), Pf.REYE: (1183, 1194, 1033, 1023, 1034, 1345, 3856, 1342, 1340, 1243, 3827, 3833, 1354, 824, 827, 991, 883, 995, 814, 822, 1096, 1175), Pf.NOSE: (3540, 3704, 3555, 3560, 3561, 3501, 3526, 3563, 2793, 2751, 3092, 3099, 3102, 2205, 2193, 2973, 2868, 2921, 2920, 1676, 1623, 2057, 2064, 2067, 723, 702, 1895, 1757, 1818, 1817, 3515, 3541), Pf.TMOUTH: (2828, 2832, 2833, 2850, 2813, 2811, 2774, 3546, 1657, 1694, 1696, 1735, 1716, 1715, 1711, 1719, 1748, 1740, 1667, 1668, 3533, 2785, 2784, 2855, 2863, 2836), Pf.BMOUTH: (2891, 2890, 2892, 2928, 2937, 3509, 1848, 1826, 1789, 1787, 1788, 1579, 1773, 1774, 1795, 1802, 1865, 3503, 2948, 2905, 2898, 2881, 2880, 2715), Pf.LEAR: (3386, 3381, 1962, 2213, 2259, 2257, 2954, 3171, 2003), Pf.REAR: (3554, 576, 2159, 1872, 798, 802, 731, 567, 3577, 3582), Pf.CHIN: (3390, 3391, 3396, 3400, 3599, 3593, 3588), Pf.FOREHEAD: (3068, 2196, 2091, 3524, 628, 705, 2030)}
-        self._quality = {0: 'HQ', 1: 'LQ'}
-        self._gender = {0: 'Female', 1: 'Male', 2: 'Undefined'}
-        self._expression = {True: 'Expression', False: 'No expression'}
-        self._age = {0: 'Child', 1: 'Young', 2: 'Middle aged', 3: 'Senior'}
-        self._occlusion = {True: 'Occlusion', False: 'No occlusion'}
-        self._pose = {0: 'Front', 1: 'Sided', 2: 'Atypical'}
-        self._light = {True: 'Light', False: 'No light'}
         self._categories = {0: Oi.FACE}
         self._colors = [(0, 255, 0)]
 
@@ -499,13 +469,13 @@ class DAD(Database):
                 pos = (float(flame_vertices2d[idx, 0]), height-float(flame_vertices2d[idx, 1]))
                 obj.add_landmark(GenericLandmark(idx, lp, pos, True), lps[type(lp)])
         if len(parts) != 8:  # train, test
-            obj.add_attribute(GenericCategory(self._quality[int(parts[len(parts)-7])]))
-            obj.add_attribute(GenericCategory(self._gender[int(parts[len(parts)-6])]))
-            obj.add_attribute(GenericCategory(self._expression[bool(parts[len(parts)-5])]))
-            obj.add_attribute(GenericCategory(self._age[int(parts[len(parts)-4])]))
-            obj.add_attribute(GenericCategory(self._occlusion[bool(parts[len(parts)-3])]))
-            obj.add_attribute(GenericCategory(self._pose[int(parts[len(parts)-2])]))
-            obj.add_attribute(GenericCategory(self._light[bool(parts[len(parts)-1])]))
+            obj.add_category(GenericCategory({0: 'HQ', 1: 'LQ'}[int(parts[len(parts)-7])]))
+            obj.add_category(GenericCategory({0: 'Female', 1: 'Male', 2: 'Undefined'}[int(parts[len(parts)-6])]))
+            obj.add_category(GenericCategory({True: 'Expression', False: 'No expression'}[bool(parts[len(parts)-5])]))
+            obj.add_category(GenericCategory({0: 'Child', 1: 'Young', 2: 'Middle aged', 3: 'Senior'}[int(parts[len(parts)-4])]))
+            obj.add_category(GenericCategory({True: 'Occlusion', False: 'No occlusion'}[bool(parts[len(parts)-3])]))
+            obj.add_category(GenericCategory({0: 'Front', 1: 'Sided', 2: 'Atypical'}[int(parts[len(parts)-2])]))
+            obj.add_category(GenericCategory({True: 'Light', False: 'No light'}[bool(parts[len(parts)-1])]))
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
         # dirname = path + 'landmarks/'
@@ -660,9 +630,6 @@ class RAF(Database):
         super().__init__()
         self._namespaces = {'raf': {}}
         self._landmarks = {Pf.LEYE: (101,), Pf.REYE: (102,), Pf.NOSE: (17,), Pf.TMOUTH: (20, 21)}
-        self._gender = {0: 'Male', 1: 'Female', 2: 'Unsure'}
-        self._race = {0: 'Caucasian', 1: 'African-American', 2: 'Asian'}
-        self._age = {0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}
         self._categories = {1: Oe.FACE.SURPRISE, 2: Oe.FACE.FEAR, 3: Oe.FACE.DISGUST, 4: Oe.FACE.HAPPINESS, 5: Oe.FACE.SADNESS, 6: Oe.FACE.ANGER, 7: Oe.FACE.NEUTRAL}
         self._colors = get_palette(len(self._categories))
 
@@ -684,9 +651,9 @@ class RAF(Database):
             lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
             pos = (float(parts.pop(0)), float(parts.pop(0)))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
-        obj.add_attribute(GenericCategory(self._gender[int(parts.pop(0))]))
-        obj.add_attribute(GenericCategory(self._race[int(parts.pop(0))]))
-        obj.add_attribute(GenericCategory(self._age[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
         obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
         image.add_object(obj)
         seq.add_image(image)
@@ -700,9 +667,6 @@ class AffectNet(Database):
         super().__init__()
         self._namespaces = {'affectnet': {}}
         self._landmarks = {Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166), Pf.LEAR: (101, 102, 103, 104, 105, 106), Pf.REAR: (112, 113, 114, 115, 116, 117), Pf.CHIN: (107, 108, 24, 110, 111)}
-        self._gender = {0: 'Female', 1: 'Male'}
-        self._race = {0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}
-        self._age = {0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}
         self._categories = {0: Oe.FACE.NEUTRAL, 1: Oe.FACE.HAPPINESS, 2: Oe.FACE.SADNESS, 3: Oe.FACE.SURPRISE, 4: Oe.FACE.FEAR, 5: Oe.FACE.DISGUST, 6: Oe.FACE.ANGER, 7: Oe.FACE.CONTEMPT}
         self._colors = get_palette(len(self._categories))
 
@@ -729,9 +693,9 @@ class AffectNet(Database):
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
-        obj.add_attribute(GenericCategory(self._gender[int(parts.pop(0))]))
-        obj.add_attribute(GenericCategory(self._race[int(parts.pop(0))]))
-        obj.add_attribute(GenericCategory(self._age[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: 'Female', 1: 'Male'}[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}[int(parts.pop(0))]))
+        obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
         obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
         image.add_object(obj)
         seq.add_image(image)
@@ -757,8 +721,8 @@ class MultiPie(Database):
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
         obj.bb = (0, 0, width, height)
-        obj.add_attribute(GenericCategory(parts[5]))  # gender
-        obj.add_attribute(GenericCategory(parts[7]))  # illumination
+        obj.add_category(GenericCategory(parts[5]))  # gender
+        obj.add_category(GenericCategory(parts[7]))  # illumination
         obj.add_category(GenericCategory(self._categories[parts[9]]))
         image.add_object(obj)
         seq.add_image(image)
@@ -1637,7 +1601,7 @@ class Celeba(Database):
         obj.add_category(GenericCategory(line['identity']))
         names = ['5_o_Clock_Shadow', 'Arched_Eyebrows', 'Attractive', 'Bags_Under_Eyes', 'Bald', 'Bangs', 'Big_Lips', 'Big_Nose', 'Black_Hair', 'Blond_Hair', 'Blurry', 'Brown_Hair', 'Bushy_Eyebrows', 'Chubby', 'Double_Chin', 'Eyeglasses', 'Goatee', 'Gray_Hair', 'Heavy_Makeup', 'High_Cheekbones', 'Male', 'Mouth_Slightly_Open', 'Mustache', 'Narrow_Eyes', 'No_Beard', 'Oval_Face', 'Pale_Skin', 'Pointy_Nose', 'Receding_Hairline', 'Rosy_Cheeks', 'Sideburns', 'Smiling', 'Straight_Hair', 'Wavy_Hair', 'Wearing_Earrings', 'Wearing_Hat', 'Wearing_Lipstick', 'Wearing_Necklace', 'Wearing_Necktie', 'Young']
         attributes = np.array(line['attributes'], dtype=int)
-        [obj.add_attribute(GenericCategory(name)) for name, attribute in zip(names, attributes) if attribute == 1]
+        [obj.add_category(GenericCategory(name)) for name, attribute in zip(names, attributes) if attribute == 1]
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1769,6 +1733,29 @@ class Fill50K(Database):
         obj.prompt = dirname + os.path.splitext(os.path.basename(image.filename))[0] + '.txt'
         with open(obj.prompt, 'w', encoding='utf-8') as ofs: 
             ofs.write(prompt)
+        image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class Shapes3D(Database):
+    def __init__(self):
+        super().__init__()
+        self._namespaces = {'shapes3d': {Sources.HUGFACE: 'eurecom-ds/shapes3d', Sources.TENSORFLOW: 'shapes3d'}}
+        self._categories = {0: Oi.BACKGROUND}
+        self._colors = get_palette(15)
+
+    def load_line(self, source, ref, path, line):
+        seq = GenericVideo()
+        filename = save_image(path, line['image'])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        obj = PersonObject()
+        obj.bb = (0, 0, width, height)
+        obj.add_category(GenericCategory(Oi.BACKGROUND))
+        names = ['label_floor_hue', 'label_object_hue', 'label_orientation', 'label_scale', 'label_shape', 'label_wall_hue']
+        [obj.add_category(GenericCategory(line[name])) for name in names]
         image.add_object(obj)
         seq.add_image(image)
         return seq
