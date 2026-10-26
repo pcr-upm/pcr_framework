@@ -260,8 +260,8 @@ class AFLW(Database):
         obj = DiffusionObject()
         obj.bb = (int(parts[1]), int(parts[2]), int(parts[1])+int(parts[3]), int(parts[2])+int(parts[4]))
         obj.add_category(GenericCategory(self._categories[0]))
-        obj.add_category(GenericCategory('Male' if parts[8] == 'm' else 'Female'))
-        obj.add_category(GenericCategory('Glasses' if bool(parts[9]) else 'No glasses'))
+        # obj.add_category(GenericCategory('Male' if parts[8] == 'm' else 'Female'))
+        # obj.add_category(GenericCategory('Glasses' if bool(parts[9]) else 'No glasses'))
         obj.headpose = Rotation.from_euler('YXZ', [float(parts[5]), float(parts[6]), float(parts[7])], degrees=True).as_matrix()
         num_landmarks = int(parts[10])
         indices = [1, 2, 3, 4, 5, 6, 7, 101, 8, 11, 102, 12, 15, 16, 17, 18, 19, 20, 103, 21, 24]
@@ -440,14 +440,14 @@ class DAD(Database):
                 lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == idx), None)]
                 pos = (float(flame_vertices2d[idx, 0]), height-float(flame_vertices2d[idx, 1]))
                 obj.add_landmark(GenericLandmark(idx, lp, pos, True), lps[type(lp)])
-        if len(parts) != 8:  # train, test
-            obj.add_category(GenericCategory({0: 'HQ', 1: 'LQ'}[int(parts[len(parts)-7])]))
-            obj.add_category(GenericCategory({0: 'Female', 1: 'Male', 2: 'Undefined'}[int(parts[len(parts)-6])]))
-            obj.add_category(GenericCategory({True: 'Expression', False: 'No expression'}[bool(parts[len(parts)-5])]))
-            obj.add_category(GenericCategory({0: 'Child', 1: 'Young', 2: 'Middle aged', 3: 'Senior'}[int(parts[len(parts)-4])]))
-            obj.add_category(GenericCategory({True: 'Occlusion', False: 'No occlusion'}[bool(parts[len(parts)-3])]))
-            obj.add_category(GenericCategory({0: 'Front', 1: 'Sided', 2: 'Atypical'}[int(parts[len(parts)-2])]))
-            obj.add_category(GenericCategory({True: 'Light', False: 'No light'}[bool(parts[len(parts)-1])]))
+        # if len(parts) != 8:  # train, test
+        #     obj.add_category(GenericCategory({0: 'HQ', 1: 'LQ'}[int(parts[len(parts)-7])]))
+        #     obj.add_category(GenericCategory({0: 'Female', 1: 'Male', 2: 'Undefined'}[int(parts[len(parts)-6])]))
+        #     obj.add_category(GenericCategory({True: 'Expression', False: 'No expression'}[bool(parts[len(parts)-5])]))
+        #     obj.add_category(GenericCategory({0: 'Child', 1: 'Young', 2: 'Middle aged', 3: 'Senior'}[int(parts[len(parts)-4])]))
+        #     obj.add_category(GenericCategory({True: 'Occlusion', False: 'No occlusion'}[bool(parts[len(parts)-3])]))
+        #     obj.add_category(GenericCategory({0: 'Front', 1: 'Sided', 2: 'Atypical'}[int(parts[len(parts)-2])]))
+        #     obj.add_category(GenericCategory({True: 'Light', False: 'No light'}[bool(parts[len(parts)-1])]))
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
         # dirname = path + 'landmarks/'
@@ -608,9 +608,9 @@ class RAF(Database):
             lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
             pos = (float(parts.pop(0)), float(parts.pop(0)))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
-        obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
         obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
         image.add_object(obj)
         seq.add_image(image)
@@ -647,9 +647,9 @@ class AffectNet(Database):
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
-        obj.add_category(GenericCategory({0: 'Female', 1: 'Male'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory({0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Female', 1: 'Male'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
         obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
         image.add_object(obj)
         seq.add_image(image)
@@ -672,8 +672,8 @@ class MultiPie(Database):
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
         obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(parts[5]))  # gender
-        obj.add_category(GenericCategory(parts[7]))  # illumination
+        # obj.add_category(GenericCategory(parts[5]))  # gender
+        # obj.add_category(GenericCategory(parts[7]))  # illumination
         obj.add_category(GenericCategory(self._categories[parts[9]]))
         image.add_object(obj)
         seq.add_image(image)
@@ -1623,7 +1623,7 @@ class Shapes3D(Database):
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
         obj.bb = (0, 0, width, height)
-        obj.add_category(GenericCategory(self._categories[0]))
+        # obj.add_category(GenericCategory(self._categories[0]))
         names = ['label_floor_hue', 'label_object_hue', 'label_orientation', 'label_scale', 'label_shape', 'label_wall_hue']
         [obj.add_category(GenericCategory(line[name])) for name in names]
         image.add_object(obj)
