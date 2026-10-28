@@ -1045,7 +1045,7 @@ class COCO(Database):
             contours = literal_eval(parts[(5*idx)+6]) if source is Sources.TXT else line['objects'][idx]['segmentation'].get('polygons', [])
             if not contours:
                 continue
-            category = int(parts[(5*idx)+7] if source is Sources.TXT else line['objects'][idx]['category_id'])
+            category = int(parts[(5*idx)+7]) if source is Sources.TXT else int(line['objects'][idx]['category_id'])-1
             # landmarks = np.array(json.loads(parts[(5*idx)+8]) if source is Sources.TXT else line['objects'][idx]['keypoints'], dtype=int)
             obj = PersonObject() if category == 1 else GenericObject()
             obj.id = id
@@ -1060,6 +1060,37 @@ class COCO(Database):
             #     if vis == 0:  # landmark is not labelled
             #         continue
             #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis==2)), lps[type(lp)])
+            image.add_object(obj)
+        seq.add_image(image)
+        return seq
+
+
+class VOC(Database):
+    from pcr_framework.categories.vehicles import Vehicle as Ov
+    from pcr_framework.categories.animals import Animal as Oa
+    from pcr_framework.categories.kitchen import Kitchen as Ok
+    from pcr_framework.categories.furniture import Furniture as Ow
+    from pcr_framework.categories.electronic import Electronic as Oe
+    _namespaces = {'voc': {Sources.HUGFACE: 'shijli/voc2012', Sources.TENSORFLOW: 'voc/2012'}}
+    _categories = {1: Ov.VEHICLE.AIRPLANE, 2: Ov.VEHICLE.BICYCLE, 3: Oa.ANIMAL.BIRD, 4: Ov.VEHICLE.BOAT, 5: Ok.KITCHEN.BOTTLE, 6: Ov.VEHICLE.BUS, 7: Ov.VEHICLE.CAR, 8: Oa.ANIMAL.CAT, 9: Ow.FURNITURE.CHAIR, 10: Oa.ANIMAL.COW, 11: Ow.FURNITURE.DINING_TABLE, 12: Oa.ANIMAL.DOG, 13: Oa.ANIMAL.HORSE, 14: Ov.VEHICLE.MOTORCYCLE, 15: Oi.PERSON, 16: Ow.FURNITURE.POTTED_PLANT, 17: Oa.ANIMAL.SHEEP, 18: Ow.FURNITURE.COUCH, 19: Ov.VEHICLE.TRAIN, 20: Oe.ELECTRONIC.TV}
+
+    def get_namespace(self, mode, source, ref):
+        return self._namespaces[ref][source], 'detection', 'train' if mode is Modes.TRAIN else 'validation'
+    
+    def load_line(self, source, ref, path, line):
+        seq = GenericVideo()
+        filename = save_image(path, line['image'])
+        image = GenericImage(filename)
+        width, height = Image.open(image.filename).size
+        image.tile = np.array([0, 0, width, height])
+        for idx in range(0, len(line['objects']['bbox'])):
+            bbox = np.array(line['objects']['bbox'][idx], dtype=float)
+            if source is Sources.TENSORFLOW:
+                bbox = np.array([bbox[1], bbox[0], bbox[3], bbox[2]]) * np.array([width, height, width, height])
+            category = int(line['objects']['label'][idx])
+            obj = PersonObject() if category == 15 else GenericObject()
+            obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3]))
+            obj.add_category(GenericCategory(list(self._categories.values())[category]))
             image.add_object(obj)
         seq.add_image(image)
         return seq
