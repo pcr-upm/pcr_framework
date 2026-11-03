@@ -465,7 +465,7 @@ class AFLW2000(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
     _namespaces = {'300wlp': {Sources.TENSORFLOW: 'the300w_lp'}, 
                    'aflw2000': {Sources.TENSORFLOW: 'aflw2k3d'}}
-    _landmarks = {Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166), Pf.LEAR: (101, 102, 103, 104, 105, 106), Pf.REAR: (112, 113, 114, 115, 116, 117), Pf.CHIN: (107, 108, 24, 110, 111)}
+    _landmarks = PTS68().get_landmarks()
     _categories = {0: Oi.FACE}
 
     def load_line(self, source, ref, path, line):
@@ -621,7 +621,7 @@ class AffectNet(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
     from pcr_framework.categories.emotions import Emotion as Oe
     _namespaces = {'affectnet': {}}
-    _landmarks = {Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166), Pf.LEAR: (101, 102, 103, 104, 105, 106), Pf.REAR: (112, 113, 114, 115, 116, 117), Pf.CHIN: (107, 108, 24, 110, 111)}
+    _landmarks = PTS68().get_landmarks()
     _categories = {0: Oe.FACE.NEUTRAL, 1: Oe.FACE.HAPPINESS, 2: Oe.FACE.SADNESS, 3: Oe.FACE.SURPRISE, 4: Oe.FACE.FEAR, 5: Oe.FACE.DISGUST, 6: Oe.FACE.ANGER, 7: Oe.FACE.CONTEMPT}
 
     def load_line(self, source, ref, path, line):
@@ -1017,7 +1017,7 @@ class COCO(Database):
     from pcr_framework.categories.appliance import Appliance as Oj
     from pcr_framework.categories.indoor import Indoor as Oy
     _namespaces = {'coco': {Sources.HUGFACE: 'srishti-kaushik/COCO-2017'}}
-    _landmarks = {Pf.NOSE: (0,), Pf.LEYE: (1,), Pf.REYE: (2,), Pf.LEAR: (3,), Pf.REAR: (4,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,)}
+    _landmarks = {Pf.NOSE: (17,), Pf.LEYE: (201,), Pf.REYE: (202,), Pf.LEAR: (15,), Pf.REAR: (19,), Pb.LSHOULDER: (27,), Pb.RSHOULDER: (28,), Pb.LELBOW: (26,), Pb.RELBOW: (29,), Ph.LWRIST: (25,), Ph.RWRIST: (30,), Pb.LHIP: (33,), Pb.RHIP: (34,), Pb.LKNEE: (32,), Pb.RKNEE: (35,), Pb.LANKLE: (31,), Pb.RANKLE: (36,)}
     _categories = {1: Oi.PERSON, 2: Ov.VEHICLE.BICYCLE, 3: Ov.VEHICLE.CAR, 4: Ov.VEHICLE.MOTORCYCLE, 5: Ov.VEHICLE.AIRPLANE, 6: Ov.VEHICLE.BUS, 7: Ov.VEHICLE.TRAIN, 8: Ov.VEHICLE.TRUCK, 9: Ov.VEHICLE.BOAT, 10: Oo.OUTDOOR.TRAFFIC_LIGHT, 11: Oo.OUTDOOR.FIRE_HYDRANT, 12: Oo.OUTDOOR.STREET_SIGN, 13: Oo.OUTDOOR.STOP_SIGN, 14: Oo.OUTDOOR.PARKING_METER, 15: Oo.OUTDOOR.BENCH, 16: Oa.ANIMAL.BIRD, 17: Oa.ANIMAL.CAT, 18: Oa.ANIMAL.DOG, 19: Oa.ANIMAL.HORSE, 20: Oa.ANIMAL.SHEEP, 21: Oa.ANIMAL.COW, 22: Oa.ANIMAL.ELEPHANT, 23: Oa.ANIMAL.BEAR, 24: Oa.ANIMAL.ZEBRA, 25: Oa.ANIMAL.GIRAFFE, 26: Oq.ACCESSORY.HAT, 27: Oq.ACCESSORY.BACKPACK, 28: Oq.ACCESSORY.UMBRELLA, 29: Oq.ACCESSORY.SHOE, 30: Oq.ACCESSORY.EYE_GLASSES, 31: Oq.ACCESSORY.HANDBAG, 32: Oq.ACCESSORY.TIE, 33: Oq.ACCESSORY.SUITCASE, 34: Os.SPORTS.FRISBEE, 35: Os.SPORTS.SKIS, 36: Os.SPORTS.SNOWBOARD, 37: Os.SPORTS.SPORTS_BALL, 38: Os.SPORTS.KITE, 39: Os.SPORTS.BASEBALL_BAT, 40: Os.SPORTS.BASEBALL_GLOVE, 41: Os.SPORTS.SKATEBOARD, 42: Os.SPORTS.SURFBOARD, 43: Os.SPORTS.TENNIS_RACKET, 44: Ok.KITCHEN.BOTTLE, 45: Ok.KITCHEN.PLATE, 46: Ok.KITCHEN.WINE_GLASS, 47: Ok.KITCHEN.CUP, 48: Ok.KITCHEN.FORK, 49: Ok.KITCHEN.KNIFE, 50: Ok.KITCHEN.SPOON, 51: Ok.KITCHEN.BOWL, 52: Of.FOOD.BANANA, 53: Of.FOOD.APPLE, 54: Of.FOOD.SANDWICH, 55: Of.FOOD.ORANGE, 56: Of.FOOD.BROCCOLI, 57: Of.FOOD.CARROT, 58: Of.FOOD.HOT_DOG, 59: Of.FOOD.PIZZA, 60: Of.FOOD.DONUT, 61: Of.FOOD.CAKE, 62: Ow.FURNITURE.CHAIR, 63: Ow.FURNITURE.COUCH, 64: Ow.FURNITURE.POTTED_PLANT, 65: Ow.FURNITURE.BED, 66: Ow.FURNITURE.MIRROR, 67: Ow.FURNITURE.DINING_TABLE, 68: Ow.FURNITURE.WINDOW, 69: Ow.FURNITURE.DESK, 70: Ow.FURNITURE.TOILET, 71: Ow.FURNITURE.DOOR, 72: Oe.ELECTRONIC.TV, 73: Oe.ELECTRONIC.LAPTOP, 74: Oe.ELECTRONIC.MOUSE, 75: Oe.ELECTRONIC.REMOTE, 76: Oe.ELECTRONIC.KEYBOARD, 77: Oe.ELECTRONIC.CELL_PHONE, 78: Oj.APPLIANCE.MICROWAVE, 79: Oj.APPLIANCE.OVEN, 80: Oj.APPLIANCE.TOASTER, 81: Oj.APPLIANCE.SINK, 82: Oj.APPLIANCE.REFRIGERATOR, 83: Oj.APPLIANCE.BLENDER, 84: Oy.INDOOR.BOOK, 85: Oy.INDOOR.CLOCK, 86: Oy.INDOOR.VASE, 87: Oy.INDOOR.SCISSORS, 88: Oy.INDOOR.TEDDY_BEAR, 89: Oy.INDOOR.HAIR_DRIER, 90: Oy.INDOOR.TOOTHBRUSH, 91: Oy.INDOOR.HAIR_BRUSH}
 
     def get_namespace(self, mode, source, ref):
@@ -1053,10 +1053,10 @@ class COCO(Database):
             obj.add_category(GenericCategory(list(self._categories.values())[category]))
             # obj.multipolygon = list([np.array(contour, dtype=float).round().astype(np.int32).reshape(-1, 1, 2) for contour in contours])
             # [obj.add_category(GenericCategory(list(self._categories.values())[category])) for _ in contours]
-            # for label in list(itertools.chain.from_iterable(self._landmarks.values())):
+            # for idx_lnd, label in enumerate(list(itertools.chain.from_iterable(self._landmarks.values()))):
             #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            #     pos = (int(landmarks[(3*label)]), int(landmarks[(3*label)+1]))
-            #     vis = int(landmarks[(3*label)+2])
+            #     pos = (int(landmarks[(3*idx_lnd)]), int(landmarks[(3*idx_lnd)+1]))
+            #     vis = int(landmarks[(3*idx_lnd)+2])
             #     if vis == 0:  # landmark is not labelled
             #         continue
             #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis==2)), lps[type(lp)])
@@ -1492,7 +1492,7 @@ class FER2013(Database):
 class Celeba(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
     _namespaces = {'celeba': {Sources.HUGFACE: 'eurecom-ds/celeba', Sources.TENSORFLOW: 'celeb_a'}}
-    _landmarks = {Pf.LEYE: (101,), Pf.REYE: (102,), Pf.NOSE: (17,), Pf.TMOUTH: (20, 21)}
+    _landmarks = RAF().get_landmarks()
     _categories = {0: Oi.FACE}
 
     def get_namespace(self, mode, source, ref):
