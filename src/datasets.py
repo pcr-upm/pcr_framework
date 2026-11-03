@@ -1047,7 +1047,7 @@ class COCO(Database):
                 continue
             category = int(parts[(5*idx)+7]) if source is Sources.TXT else int(line['objects'][idx]['category_id'])-1
             # landmarks = np.array(json.loads(parts[(5*idx)+8]) if source is Sources.TXT else line['objects'][idx]['keypoints'], dtype=int)
-            obj = PersonObject() if category == 1 else GenericObject()
+            obj = PersonObject() if category == 0 else GenericObject()
             obj.id = id
             obj.bb = (float(bbox[0]), float(bbox[1]), float(bbox[0]+bbox[2]), float(bbox[1]+bbox[3]))
             obj.add_category(GenericCategory(list(self._categories.values())[category]))

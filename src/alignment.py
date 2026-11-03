@@ -9,6 +9,7 @@ import math
 import numpy as np
 from scipy.spatial.transform import Rotation
 from .component import Component
+from .annotations import PersonObject
 from .detection import Detection
 from .datasets import Database
 
@@ -63,6 +64,8 @@ class Alignment(Component):
             image_idx = [np.array_equal(img_pred.filename, f) & np.array_equal(img_pred.tile, t) for f, t in ann_order].index(True)
             for objs_idx, objs_val in enumerate([ann.images[image_idx].objects, img_pred.objects]):
                 for obj in objs_val:
+                    if not isinstance(obj, PersonObject):
+                        continue
                     # Draw axis
                     (xmin, ymin, xmax, ymax) = obj.bb
                     contour = np.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]], dtype=np.int32)
@@ -107,8 +110,10 @@ class Alignment(Component):
         for img_pred in pred.images:
             image_idx = [np.array_equal(img_pred.filename, f) & np.array_equal(img_pred.tile, t) for f, t in ann_order].index(True)
             fs.write(str(self.get_component_class()) + ';' + ann.images[image_idx].filename + ';' + str(ann.images[image_idx].tile.tolist()) + ';' + str(len(ann.images[image_idx].objects)) + ';' + str(len(img_pred.objects)))
-            for objs_idx, objs_val in enumerate([ann.images[image_idx].objects, img_pred.objects]):
+            for objs_val in [ann.images[image_idx].objects, img_pred.objects]:
                 for obj in objs_val:
+                    if not isinstance(obj, PersonObject):
+                        continue
                     landmarks = map(str, [';'.join(map(str, [lnd.label, ';'.join(map(str, lnd.pos)), lnd.visible, lnd.confidence])) for lnds in [landmarks for lps in obj.landmarks.values() for landmarks in lps.values()] for lnd in lnds])
                     num_landmarks = len([lnd for lnds in [landmarks for lps in obj.landmarks.values() for landmarks in lps.values()] for lnd in lnds])
                     fs.write(';' + str(obj.id) + ';' + str(obj.bb) + ';' + str(obj.headpose.tolist() if hasattr(obj, 'headpose') else Rotation.from_euler('YXZ', [-1, -1, -1], degrees=True).as_matrix().tolist()) + ';' + str(num_landmarks))
@@ -126,6 +131,8 @@ class Alignment(Component):
             output_json = dict({'images': [], 'annotations': [], 'mapping': []})
             output_json['images'].append(dict({'id': img_idx, 'file_name': os.path.basename(img_pred.filename), 'width': int(img_pred.tile[2]-img_pred.tile[0]), 'height': int(img_pred.tile[3]-img_pred.tile[1]), 'date_captured': img_pred.timestamp}))
             for obj in img_pred.objects:
+                if not isinstance(obj, PersonObject):
+                    continue
                 landmarks = list(map(dict, [dict({'label': int(lnd.label), 'pos': list(map(float, lnd.pos)), 'visible': bool(lnd.visible), 'confidence': float(lnd.confidence)}) for lnds in [landmarks for lps in obj.landmarks.values() for landmarks in lps.values()] for lnd in lnds]))
                 output_json['annotations'].append(dict({'id': str(obj.id), 'image_id': img_idx, 'bbox': list(map(float, [obj.bb[0], obj.bb[1], obj.bb[2]-obj.bb[0], obj.bb[3]-obj.bb[1]])), 'pose': list(map(float, Rotation.from_matrix(obj.headpose).as_euler('YXZ', degrees=True) if hasattr(obj, 'headpose') else [-1, -1, -1])), 'landmarks': landmarks, 'iscrowd': int(len(img_pred.objects) > 1)}))
             output_json['mapping'].append(dict({str(lp.value): list(map(int, parts[lp])) for lp in parts}))
