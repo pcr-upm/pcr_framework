@@ -1489,6 +1489,44 @@ class FER2013(Database):
         return seq
 
 
+class DF40(Database):
+    from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
+    _namespaces = {'df40': {}}
+    _landmarks = {Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166), Pf.LEAR: (101, 102, 103, 104, 105, 106), Pf.REAR: (112, 113, 114, 115, 116, 117), Pf.CHIN: (107, 108, 24, 110, 111), Pf.FOREHEAD: (169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181)}
+    _categories = {0: Oi.FACE}
+
+    def load_line(self, source, ref, path, line):
+        from pcr_framework.regression.alignment.landmarks import lps
+        seq = GenericVideo()
+        parts = line.strip().split(';')
+        if parts[0] == '#':
+            return seq
+        seq.frames = int(parts[2])
+        indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 172, 173, 174, 175, 177, 178, 180, 170, 171, 169, 181, 179, 176]
+        for frame_idx in range(seq.frames):
+            filename = os.path.join(path, parts[3+(frame_idx*3)])
+            image = GenericImage(filename)
+            width, height = Image.open(image.filename).size
+            image.tile = np.array([0, 0, width, height])
+            obj = PersonObject()
+            obj.id = str(parts[0])
+            obj.bb = (0, 0, width, height)
+            npy = parts[4+(frame_idx*3)]
+            if npy:
+                landmarks = np.load(os.path.join(path, npy))
+                for lp, labels in self._landmarks.items():
+                    for label in labels:
+                        idx_lnd = indices.index(label)
+                        pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
+                        obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
+            obj.add_category(GenericCategory(label=self._categories[0], fake=bool(int(parts[5+(frame_idx*3)])==1)))
+            image.add_object(obj)
+            image.add_category(GenericCategory(label=self._categories[0], fake=any(category.fake for obj in image.objects for category in obj.categories)))
+            seq.add_image(image)
+        seq.add_category(GenericCategory(label=self._categories[0], fake=any(category.fake for image in seq.images for obj in image.objects for category in obj.categories)))
+        return seq
+
+
 class Celeba(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf
     _namespaces = {'celeba': {Sources.HUGFACE: 'eurecom-ds/celeba', Sources.TENSORFLOW: 'celeb_a'}}
