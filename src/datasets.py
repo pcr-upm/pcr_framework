@@ -121,8 +121,8 @@ class HPGEN(Database):
 class Agora(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
     _namespaces = {'agora': {}}
-    _landmarks = {Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166)}
-    # self._landmarks = {Pf.NOSE: (110, 111,), Pf.LEYE: (109,), Pf.REYE: (112,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,), Pb.LTOE: (15, 105,), Pb.RTOE: (16, 106,), Pb.NECK: (17,), Pb.CHEST: (107, 108,), Pb.ABDOMEN: (101, 102, 103, 104,)}
+    # _landmarks = {Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166)}
+    _landmarks = {Pf.NOSE: (110, 111,), Pf.LEYE: (109,), Pf.REYE: (112,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,), Pb.LTOE: (15, 105,), Pb.RTOE: (16, 106,), Pb.NECK: (17,), Pb.CHEST: (107, 108,), Pb.ABDOMEN: (101, 102, 103, 104,)}
     _categories = {0: Oi.PERSON}
 
     def load_line(self, source, ref, path, line):
@@ -137,6 +137,8 @@ class Agora(Database):
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
+        # indices = [4, 124, 5, 126, 6, 1, 119, 2, 121, 3, 128, 129, 130, 17, 16, 133, 134, 135, 18, 11, 144, 145, 12, 147, 148, 7, 138, 139, 8, 141, 142, 20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161, 156, 157, 23, 159, 160, 168, 167, 166]
+        indices = [101, 11, 12, 102, 13, 14, 103, 15, 16, 104, 105, 106, 17, 107, 108, 112, 5, 6, 7, 8, 9, 10, 109, 110, 111]
         for idx_obj in range(0, int(parts[1])):
             obj = PersonObject()
             obj.id = int(parts[(7*idx_obj)+2])
@@ -145,20 +147,20 @@ class Agora(Database):
             rot_matrix = np.reshape(np.matrix(parts[(7*idx_obj)+7], dtype=np.float32), (4, 4))
             euler = Rotation.from_matrix(np.transpose(rot_matrix[:3, :3])).as_euler('YXZ', degrees=True)
             obj.headpose = Rotation.from_euler('YXZ', [euler[0], euler[1], -euler[2]], degrees=True).as_matrix()
-            landmarks = np.array(json.loads(parts[(7*idx_obj)+8]), dtype=float).reshape(-1, 2)  # (51, 2)
-            indices = [4, 124, 5, 126, 6, 1, 119, 2, 121, 3, 128, 129, 130, 17, 16, 133, 134, 135, 18, 11, 144, 145, 12, 147, 148, 7, 138, 139, 8, 141, 142, 20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161, 156, 157, 23, 159, 160, 168, 167, 166]
-            for idx_lnd, label in enumerate(indices):
-                lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-                pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
-                obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
-            # landmarks = np.array(json.loads(parts[(2*idx_obj)+3]), dtype=float).reshape(-1, 3)  # (127, 3)
-            # skeleton, hands, face = landmarks[:25], landmarks[25:56], landmarks[56:]
-            # indices = [101, 11, 12, 102, 13, 14, 103, 15, 16, 104, 105, 106, 17, 107, 108, 112, 5, 6, 7, 8, 9, 10, 109, 110, 111]
-            # for idx_lnd, label in enumerate(indices):
-            #     lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            #     pos = (int(skeleton[idx_lnd][0]), int(skeleton[idx_lnd][1]))
-            #     vis = int(skeleton[idx_lnd][2])
-            #     obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis)), lps[type(lp)])
+            # landmarks = np.array(json.loads(parts[(7*idx_obj)+8]), dtype=float).reshape(-1, 2)  # (51, 2)
+            # for lp, labels in self._landmarks.items():
+            #     for label in labels:
+            #         idx_lnd = indices.index(label)
+            #         pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
+            #         obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
+            landmarks = np.array(json.loads(parts[(2*idx_obj)+3]), dtype=float).reshape(-1, 3)  # (127, 3)
+            skeleton, hands, face = landmarks[:25], landmarks[25:56], landmarks[56:]
+            for lp, labels in self._landmarks.items():
+                for label in labels:
+                    idx_lnd = indices.index(label)
+                    pos = (int(skeleton[idx_lnd][0]), int(skeleton[idx_lnd][1]))
+                    vis = int(skeleton[idx_lnd][2])
+                    obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis)), lps[type(lp)])
             obj.bb = cv2.boundingRect(landmarks[:, :2].astype(int))
             obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
             image.add_object(obj)
