@@ -122,7 +122,7 @@ class Agora(Database):
     from pcr_framework.regression.alignment.landmarks import FaceLandmarkPart as Pf, HandLandmarkPart as Ph, BodyLandmarkPart as Pb
     _namespaces = {'agora': {}}
     # _landmarks = {Pf.REYEBROW: (4, 124, 5, 126, 6), Pf.LEYEBROW: (1, 119, 2, 121, 3), Pf.NOSE: (128, 129, 130, 17, 16, 133, 134, 135, 18), Pf.REYE: (11, 144, 145, 12, 147, 148), Pf.LEYE: (7, 138, 139, 8, 141, 142), Pf.TMOUTH: (20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161), Pf.BMOUTH: (156, 157, 23, 159, 160, 168, 167, 166)}
-    _landmarks = {Pf.NOSE: (110, 111,), Pf.LEYE: (109,), Pf.REYE: (112,), Pb.LSHOULDER: (5,), Pb.RSHOULDER: (6,), Pb.LELBOW: (7,), Pb.RELBOW: (8,), Ph.LWRIST: (9,), Ph.RWRIST: (10,), Pb.LHIP: (11,), Pb.RHIP: (12,), Pb.LKNEE: (13,), Pb.RKNEE: (14,), Pb.LANKLE: (15,), Pb.RANKLE: (16,), Pb.LTOE: (15, 105,), Pb.RTOE: (16, 106,), Pb.NECK: (17,), Pb.CHEST: (107, 108,), Pb.ABDOMEN: (101, 102, 103, 104,)}
+    _landmarks = {Pf.NOSE: (201, 202), Pf.LEYE: (203,), Pf.REYE: (204,), Pb.LSHOULDER: (27,), Pb.RSHOULDER: (28,), Pb.LELBOW: (26,), Pb.RELBOW: (29,), Ph.LWRIST: (25,), Ph.RWRIST: (30,), Pb.LHIP: (33,), Pb.RHIP: (34,), Pb.LKNEE: (32,), Pb.RKNEE: (35,), Pb.LANKLE: (31,), Pb.RANKLE: (36,), Pb.LTOE: (205,), Pb.RTOE: (206,), Pb.NECK: (207,), Pb.CHEST: (208, 209), Pb.ABDOMEN: (210, 211, 212, 213)}
     _categories = {0: Oi.PERSON}
 
     def load_line(self, source, ref, path, line):
@@ -138,29 +138,28 @@ class Agora(Database):
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         # indices = [4, 124, 5, 126, 6, 1, 119, 2, 121, 3, 128, 129, 130, 17, 16, 133, 134, 135, 18, 11, 144, 145, 12, 147, 148, 7, 138, 139, 8, 141, 142, 20, 150, 151, 22, 153, 154, 21, 165, 164, 163, 162, 161, 156, 157, 23, 159, 160, 168, 167, 166]
-        indices = [101, 11, 12, 102, 13, 14, 103, 15, 16, 104, 105, 106, 17, 107, 108, 112, 5, 6, 7, 8, 9, 10, 109, 110, 111]
+        indices = [210, 33, 34, 211, 32, 35, 212, 31, 36, 213, 205, 206, 207, 208, 209, 204, 27, 28, 26, 29, 25, 30, 203, 201, 202]
         for idx_obj in range(0, int(parts[1])):
             obj = PersonObject()
-            obj.id = int(parts[(7*idx_obj)+2])
-            obj.bb = (int(parts[(7*idx_obj)+3]), int(parts[(7*idx_obj)+4]), int(parts[(7*idx_obj)+3])+int(parts[(7*idx_obj)+5]), int(parts[(7*idx_obj)+4])+int(parts[(7*idx_obj)+6]))
-            obj.add_category(GenericCategory(self._categories[0]))
-            rot_matrix = np.reshape(np.matrix(parts[(7*idx_obj)+7], dtype=np.float32), (4, 4))
-            euler = Rotation.from_matrix(np.transpose(rot_matrix[:3, :3])).as_euler('YXZ', degrees=True)
-            obj.headpose = Rotation.from_euler('YXZ', [euler[0], euler[1], -euler[2]], degrees=True).as_matrix()
+            # obj.id = int(parts[(7*idx_obj)+2])
+            # obj.bb = (int(parts[(7*idx_obj)+3]), int(parts[(7*idx_obj)+4]), int(parts[(7*idx_obj)+3])+int(parts[(7*idx_obj)+5]), int(parts[(7*idx_obj)+4])+int(parts[(7*idx_obj)+6]))
+            # obj.add_category(GenericCategory(self._categories[0]))
+            # rot_matrix = np.reshape(np.matrix(parts[(7*idx_obj)+7], dtype=np.float32), (4, 4))
+            # euler = Rotation.from_matrix(np.transpose(rot_matrix[:3, :3])).as_euler('YXZ', degrees=True)
+            # obj.headpose = Rotation.from_euler('YXZ', [euler[0], euler[1], -euler[2]], degrees=True).as_matrix()
             # landmarks = np.array(json.loads(parts[(7*idx_obj)+8]), dtype=float).reshape(-1, 2)  # (51, 2)
             # for lp, labels in self._landmarks.items():
-            #     for label in labels:
-            #         idx_lnd = indices.index(label)
-            #         pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
-            #         obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
+            #      idx_lnd = indices.index(label)
+            #      pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
+            #      obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
+            obj.id = int(parts[(2*idx_obj)+2])
             landmarks = np.array(json.loads(parts[(2*idx_obj)+3]), dtype=float).reshape(-1, 3)  # (127, 3)
             skeleton, hands, face = landmarks[:25], landmarks[25:56], landmarks[56:]
-            for lp, labels in self._landmarks.items():
-                for label in labels:
-                    idx_lnd = indices.index(label)
-                    pos = (int(skeleton[idx_lnd][0]), int(skeleton[idx_lnd][1]))
-                    vis = int(skeleton[idx_lnd][2])
-                    obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis)), lps[type(lp)])
+            for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+                idx_lnd = indices.index(label)
+                pos = (int(skeleton[idx_lnd][0]), int(skeleton[idx_lnd][1]))
+                vis = int(skeleton[idx_lnd][2])
+                obj.add_landmark(GenericLandmark(label, lp, pos, bool(vis)), lps[type(lp)])
             obj.bb = cv2.boundingRect(landmarks[:, :2].astype(int))
             obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
             image.add_object(obj)
@@ -188,10 +187,9 @@ class PTS68(Database):
         obj.bb = (float(parts[1]), float(parts[2]), float(parts[3]), float(parts[4]))
         obj.add_category(GenericCategory(self._categories[0]))
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (float(parts[(2*idx)+5]), float(parts[(2*idx)+6]))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = indices.index(label)
+            pos = (float(parts[(2*idx_lnd)+5]), float(parts[(2*idx_lnd)+6]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
             # dirname = path + 'landmarks/'
             # Path(dirname).mkdir(parents=True, exist_ok=True)
@@ -225,11 +223,10 @@ class COFW(Database):
         obj.bb = (float(parts[1]), float(parts[2]), float(parts[1])+float(parts[3]), float(parts[2])+float(parts[4]))
         obj.add_category(GenericCategory(self._categories[0]))
         indices = [1, 6, 3, 4, 101, 102, 103, 104, 7, 12, 8, 11, 9, 10, 13, 14, 105, 106, 16, 18, 17, 107, 20, 21, 22, 108, 109, 23, 24]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (float(parts[(3*idx)+5]), float(parts[(3*idx)+6]))
-            vis = float(parts[(3*idx)+7]) == 0.0
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = indices.index(label)
+            pos = (float(parts[(3*idx_lnd)+5]), float(parts[(3*idx_lnd)+6]))
+            vis = float(parts[(3*idx_lnd)+7]) == 0.0
             obj.add_landmark(GenericLandmark(label, lp, pos, vis), lps[type(lp)])
             # dirname = path + 'landmarks/'
             # Path(dirname).mkdir(parents=True, exist_ok=True)
@@ -295,22 +292,21 @@ class WFLW(Database):
         parts = line.strip().split(';')
         if parts[0] == '#':
             return seq
-        filename = os.path.join(path, parts.pop(0))
+        filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        num_faces = int(parts.pop(0))
+        num_faces = int(parts[1])
+        indices = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 24, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 1, 134, 2, 136, 3, 138, 139, 140, 141, 4, 143, 5, 145, 6, 147, 148, 149, 150, 151, 152, 153, 17, 16, 156, 157, 158, 18, 7, 161, 9, 163, 8, 165, 10, 167, 11, 169, 13, 171, 12, 173, 14, 175, 20, 177, 178, 22, 180, 181, 21, 183, 184, 23, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197]
         for idx in range(0, num_faces):
             obj = DiffusionObject()
-            x, y, w, h = parts.pop(0), parts.pop(0), parts.pop(0), parts.pop(0)
+            x, y, w, h = parts[2], parts[3], parts[4], parts[5]
             obj.bb = (int(x), int(y), int(x)+int(w), int(y)+int(h))
             obj.add_category(GenericCategory(self._categories[0]))
-            pose, expression, illumination, makeup, occlusion, blur = parts.pop(0), parts.pop(0), parts.pop(0), parts.pop(0), parts.pop(0), parts.pop(0)
-            indices = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 24, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 1, 134, 2, 136, 3, 138, 139, 140, 141, 4, 143, 5, 145, 6, 147, 148, 149, 150, 151, 152, 153, 17, 16, 156, 157, 158, 18, 7, 161, 9, 163, 8, 165, 10, 167, 11, 169, 13, 171, 12, 173, 14, 175, 20, 177, 178, 22, 180, 181, 21, 183, 184, 23, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197]
-            for idx in range(0, len(indices)):
-                label = indices[idx]
-                lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-                pos = (float(parts.pop(0)), float(parts.pop(0)))
+            pose, expression, illumination, makeup, occlusion, blur = parts[6], parts[7], parts[8], parts[9], parts[10], parts[11]
+            for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+                idx_lnd = indices.index(label)
+                pos = (float(parts[12+(idx_lnd*2)]), float(parts[13+(idx_lnd*2)]))
                 obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
                 # dirname = path + 'landmarks/'
                 # Path(dirname).mkdir(parents=True, exist_ok=True)
@@ -336,18 +332,15 @@ class CatHeads(Database):
         parts = line.strip().split(';')
         if parts[0] == '#':
             return seq
-        filename = os.path.join(path, parts.pop(0))
+        filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
-        num_landmarks = int(parts.pop(0))
         obj = PersonObject()
         obj.add_category(GenericCategory(self._categories[0]))
-        indices = [101, 102, 103, 104, 105, 106, 107, 108, 109]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (int(parts.pop(0)), int(parts.pop(0)))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = list(self._landmarks.values()).index(label)
+            pos = (int(parts[2+(idx_lnd*2)]), int(parts[3+(idx_lnd*2)]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
@@ -389,10 +382,9 @@ class FaceSynthetics(Database):
         obj = DiffusionObject()
         obj.add_category(GenericCategory(self._categories[0]))
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (float(parts[(2*idx)+3]), float(parts[(2*idx)+4])) if source is Sources.TXT else tuple(map(float, line['landmarks'].splitlines()[idx].split()))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = indices.index(label)
+            pos = (float(parts[(2*idx_lnd)+3]), float(parts[(2*idx_lnd)+4])) if source is Sources.TXT else tuple(map(float, line['landmarks'].splitlines()[idx_lnd].split()))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
@@ -438,10 +430,9 @@ class DAD(Database):
             flame_vertices3d_world_homo = np.transpose(np.matmul(model_view_matrix, np.transpose(flame_vertices3d_homo)))
             flame_vertices2d_homo = np.transpose(np.matmul(projection_matrix, np.transpose(flame_vertices3d_world_homo)))
             flame_vertices2d = flame_vertices2d_homo[:, :2] / flame_vertices2d_homo[:, [3]]
-            for idx in list(itertools.chain.from_iterable(self._landmarks.values())):
-                lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == idx), None)]
-                pos = (float(flame_vertices2d[idx, 0]), height-float(flame_vertices2d[idx, 1]))
-                obj.add_landmark(GenericLandmark(idx, lp, pos, True), lps[type(lp)])
+            for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+                pos = (float(flame_vertices2d[label, 0]), height-float(flame_vertices2d[label, 1]))
+                obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         # if len(parts) != 8:  # train, test
         #     obj.add_category(GenericCategory({0: 'HQ', 1: 'LQ'}[int(parts[len(parts)-7])]))
         #     obj.add_category(GenericCategory({0: 'Female', 1: 'Male', 2: 'Undefined'}[int(parts[len(parts)-6])]))
@@ -496,10 +487,9 @@ class AFLW2000(Database):
                 lnds = line['landmarks_68_3d_xy_normalized'].numpy()
             lnds *= np.array([width, height])
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (int(round(float(lnds[idx][0]))), int(round(float(lnds[idx][1]))))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = indices.index(label)
+            pos = (int(round(float(lnds[idx_lnd][0]))), int(round(float(lnds[idx_lnd][1]))))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
@@ -598,22 +588,20 @@ class RAF(Database):
         parts = line.strip().split(';')
         if parts[0] == '#':
             return seq
-        filename = os.path.join(path, parts.pop(0))
+        filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
-        obj.bb = (int(round(float(parts.pop(0)))), int(round(float(parts.pop(0)))), int(round(float(parts.pop(0)))), int(round(float(parts.pop(0)))))
-        indices = [101, 102, 17, 20, 21]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (float(parts.pop(0)), float(parts.pop(0)))
+        obj.bb = (int(round(float(parts[1]))), int(round(float(parts[2]))), int(round(float(parts[3]))), int(round(float(parts[4]))))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = list(self._landmarks.values()).index(label)
+            pos = (float(parts[5+(idx_lnd*2)]), float(parts[6+(idx_lnd*2)]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
-        # obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts.pop(0))]))
-        # obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts.pop(0))]))
-        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts[7+(len(indices)*2)])]))
+        # obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts[8+(len(indices)*2)])]))
+        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts[9+(len(indices)*2)])]))
+        obj.add_category(GenericCategory(self._categories[int(parts[10+(len(indices)*2)])]))
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -634,25 +622,23 @@ class AffectNet(Database):
         parts = line.strip().split(';')
         if parts[0] == '#':
             return seq
-        filename = os.path.join(path, parts.pop(0))
+        filename = os.path.join(path, parts[0])
         image = GenericImage(filename)
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = PersonObject()
-        obj.headpose = Rotation.from_euler('YXZ', [-float(parts.pop(0)), float(parts.pop(0)), float(parts.pop(0))], degrees=True).as_matrix()
-        subset = parts.pop(0)
+        obj.headpose = Rotation.from_euler('YXZ', [-float(parts[1]), float(parts[2]), float(parts[3])], degrees=True).as_matrix()
         indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
-        for idx in range(0, len(indices)):
-            label = indices[idx]
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
-            pos = (float(parts.pop(0)), float(parts.pop(0)))
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = indices.index(label)
+            pos = (float(parts[5+(idx_lnd*2)]), float(parts[6+(idx_lnd*2)]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.bb = cv2.boundingRect(np.array([[pt.pos for pt in list(itertools.chain.from_iterable(obj.landmarks[Pl.FACE.value].values()))]]).astype(int))
         obj.bb = (obj.bb[0], obj.bb[1], obj.bb[0]+obj.bb[2], obj.bb[1]+obj.bb[3])
-        # obj.add_category(GenericCategory({0: 'Female', 1: 'Male'}[int(parts.pop(0))]))
-        # obj.add_category(GenericCategory({0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}[int(parts.pop(0))]))
-        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts.pop(0))]))
-        obj.add_category(GenericCategory(self._categories[int(parts.pop(0))]))
+        # obj.add_category(GenericCategory({0: 'Female', 1: 'Male'}[int(parts[7+(len(indices)*2)])]))
+        # obj.add_category(GenericCategory({0: 'Asian', 1: 'Indian', 2: 'Black', 3: 'White', 4: 'Middle-Eastern', 5: 'Latino-Hispanic'}[int(parts[8+(len(indices)*2)])]))
+        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts[9+(len(indices)*2)])]))
+        obj.add_category(GenericCategory(self._categories[int(parts[10+(len(indices)*2)])]))
         image.add_object(obj)
         seq.add_image(image)
         return seq
@@ -1516,11 +1502,10 @@ class DF40(Database):
             npy = parts[4+(frame_idx*3)]
             if npy:
                 landmarks = np.load(os.path.join(path, npy))
-                for lp, labels in self._landmarks.items():
-                    for label in labels:
-                        idx_lnd = indices.index(label)
-                        pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
-                        obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
+                for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+                    idx_lnd = indices.index(label)
+                    pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
+                    obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
             obj.add_category(GenericCategory(label=self._categories[0], fake=bool(int(parts[5+(frame_idx*3)])==1)))
             image.add_object(obj)
             image.add_category(GenericCategory(label=self._categories[0], fake=any(category.fake for obj in image.objects for category in obj.categories)))
@@ -1549,9 +1534,8 @@ class Celeba(Database):
         bbox = np.array(line['bbox'], dtype=int)
         obj.bb = (bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3])
         landmarks = np.array(line['landmarks'], dtype=int).reshape(-1, 2)  # (5, 2)
-        indices = [101, 102, 17, 20, 21]
-        for idx_lnd, label in enumerate(indices):
-            lp = list(self._landmarks.keys())[next((ids for ids, xs in enumerate(self._landmarks.values()) for x in xs if x == label), None)]
+        for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
+            idx_lnd = list(self._landmarks.values()).index(label)
             pos = (int(landmarks[idx_lnd][0]), int(landmarks[idx_lnd][1]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
         obj.add_category(GenericCategory(line['identity']))
