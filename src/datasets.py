@@ -475,6 +475,7 @@ class AFLW2000(Database):
         width, height = Image.open(image.filename).size
         image.tile = np.array([0, 0, width, height])
         obj = DiffusionObject()
+        indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
         if source is Sources.TXT:
             obj.add_category(GenericCategory(parts[1]))  # Set identity as category to split the validation set
             obj.headpose = Rotation.from_euler('XYZ', [float(parts[3]), float(parts[2]), float(parts[4])], degrees=True).as_matrix()
@@ -486,7 +487,6 @@ class AFLW2000(Database):
             else:
                 lnds = line['landmarks_68_3d_xy_normalized'].numpy()
             lnds *= np.array([width, height])
-        indices = [101, 102, 103, 104, 105, 106, 107, 108, 24, 110, 111, 112, 113, 114, 115, 116, 117, 1, 119, 2, 121, 3, 4, 124, 5, 126, 6, 128, 129, 130, 17, 16, 133, 134, 135, 18, 7, 138, 139, 8, 141, 142, 11, 144, 145, 12, 147, 148, 20, 150, 151, 22, 153, 154, 21, 156, 157, 23, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168]
         for lp, label in ((lp, label) for lp, labels in self._landmarks.items() for label in labels):
             idx_lnd = indices.index(label)
             pos = (int(round(float(lnds[idx_lnd][0]))), int(round(float(lnds[idx_lnd][1]))))
@@ -598,10 +598,10 @@ class RAF(Database):
             idx_lnd = list(self._landmarks.values()).index(label)
             pos = (float(parts[5+(idx_lnd*2)]), float(parts[6+(idx_lnd*2)]))
             obj.add_landmark(GenericLandmark(label, lp, pos, True), lps[type(lp)])
-        # obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts[7+(len(indices)*2)])]))
-        # obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts[8+(len(indices)*2)])]))
-        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts[9+(len(indices)*2)])]))
-        obj.add_category(GenericCategory(self._categories[int(parts[10+(len(indices)*2)])]))
+        # obj.add_category(GenericCategory({0: 'Male', 1: 'Female', 2: 'Unsure'}[int(parts[7+(len(self._landmarks.items())*2)])]))
+        # obj.add_category(GenericCategory({0: 'Caucasian', 1: 'African-American', 2: 'Asian'}[int(parts[8+(len(self._landmarks.items())*2)])]))
+        # obj.add_category(GenericCategory({0: '0-3', 1: '4-19', 2: '20-39', 3: '40-69', 4: '70+'}[int(parts[9+(len(self._landmarks.items())*2)])]))
+        obj.add_category(GenericCategory(self._categories[int(parts[10+(len(self._landmarks.items())*2)])]))
         image.add_object(obj)
         seq.add_image(image)
         return seq

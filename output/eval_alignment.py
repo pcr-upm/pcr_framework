@@ -197,12 +197,15 @@ def main():
                         help='Select database.')
     parser.add_argument('--align', '-a', dest='align', action="store_true",
                         help='Align predicted rotation matrices.')
+    parser.add_argument('--only-common', dest='only_common', action='store_true', default=False,
+                        help='Evaluate only common landmarks (indices below 100).')
     parser.add_argument('--measure', '-m', choices=[x.value for x in Measures], default=Measures.HEIGHT,
                         help='Select measure.')
     args, _ = parser.parse_known_args()
     state = States(args.state)
     database = args.database
     align = args.align
+    only_common = args.only_common
     measure = args.measure
 
     print('Program started ...')
@@ -294,6 +297,8 @@ def main():
                             continue
                         normalization = get_normalization(measure, results[keyname][identifier]['annotation'], database)
                         for idx in results[keyname][identifier]['annotation']['landmarks'].keys():
+                            if only_common and idx >= 100:
+                                continue
                             if idx not in results[keyname][identifier]['prediction']['landmarks']:
                                 continue  # the annotation landmark label does not exist in the predictions
                             (true_pt_x, true_pt_y, true_visible, _) = results[keyname][identifier]['annotation']['landmarks'][idx]

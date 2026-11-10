@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/pcr-framework.svg)](https://badge.fury.io/py/pcr-framework)
 
 ### Requisites
-The required dependencies are installed in the [`Dockerfile`](./Dockerfile#L31-32).
+The required dependencies are installed in the [`Dockerfile`](./Dockerfile#L31-L32).
 
 ### Installation
 ```bash
