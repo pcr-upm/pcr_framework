@@ -1438,7 +1438,7 @@ class FER2013(Database):
 
 
 class FaceForensics(Database):
-    _namespaces = {'faceforensics': {}}
+    _namespaces = {'faceforensics': {}, 'cdf': {}}
     _categories = {0: Oi.FACE}
 
     def load_line(self, source, ref, path, line, load_images=True):
