@@ -70,12 +70,12 @@
 [submodule "classification/eccvw26_recognition"]
 	path = classification/eccvw26_recognition
 	url = git@github.com:pcr-upm/eccvw26_recognition.git
-[submodule "classification/bmvc26_recognition"]
-	path = classification/bmvc26_recognition
-	url = git@github.com:pcr-upm/bmvc26_recognition.git
 [submodule "classification/kimoi26_recognition"]
 	path = classification/kimoi26_recognition
 	url = git@github.com:pcr-upm/kimoi26_recognition.git
 [submodule "classification/fsfm25_recognition"]
 	path = classification/fsfm25_recognition
 	url = git@github.com:pcr-upm/fsfm25_recognition.git
+[submodule "generation/bmvc26_recognition"]
+	path = generation/bmvc26_recognition
+	url = git@github.com:pcr-upm/bmvc26_recognition.git
